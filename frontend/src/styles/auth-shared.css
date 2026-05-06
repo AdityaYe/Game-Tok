@@ -1,0 +1,388 @@
+@import './theme.css';
+
+
+
+/* =========================
+   AUTH LAYOUT
+========================= */
+
+.auth-page-wrapper {
+  min-height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    var(--space-8)
+    var(--space-4);
+
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      var(--color-surface-alt) 0%,
+      var(--color-bg) 60%
+    );
+
+  background-attachment: fixed;
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+
+  .auth-page-wrapper {
+
+    background:
+      radial-gradient(
+        circle at 70% 60%,
+        var(--color-surface-alt) 0%,
+        var(--color-bg) 65%
+      );
+
+  }
+
+}
+
+
+
+/* =========================
+   CARD
+========================= */
+
+.auth-card {
+
+  width: 100%;
+  max-width: 420px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  padding:
+    var(--space-6)
+    var(--space-6)
+    var(--space-5);
+
+  background: var(--color-surface);
+
+  border:
+    1px solid var(--color-border);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-md);
+
+}
+
+
+
+.auth-card header {
+  text-align: center;
+}
+
+
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+
+.auth-title {
+
+  margin-bottom: var(--space-2);
+
+  font-size: 1.45rem;
+  font-weight: 600;
+
+  letter-spacing: .5px;
+
+}
+
+
+
+.auth-subtitle {
+
+  font-size: .85rem;
+
+  color:
+    var(--color-text-secondary);
+
+}
+
+
+
+.auth-alt-action {
+
+  text-align: center;
+
+  font-size: .85rem;
+
+  color:
+    var(--color-text-secondary);
+
+}
+
+
+
+.auth-alt-action a {
+  font-weight: 600;
+}
+
+
+
+.small-note {
+
+  font-size: .7rem;
+
+  line-height: 1.2;
+
+  color:
+    var(--color-text-secondary);
+
+}
+
+
+
+/* =========================
+   FORM
+========================= */
+
+.auth-form {
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--space-4);
+
+}
+
+
+
+.field-group {
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+}
+
+
+
+.field-group label {
+
+  font-size: .75rem;
+  font-weight: 600;
+
+  letter-spacing: .07em;
+  text-transform: uppercase;
+
+  color:
+    var(--color-text-secondary);
+
+}
+
+
+
+/* =========================
+   INPUTS
+========================= */
+
+.field-group input,
+.field-group textarea {
+
+  width: 100%;
+  min-width: 0;
+
+  appearance: none;
+
+  padding: 10px 12px;
+
+  font: inherit;
+  color: var(--color-text);
+
+  background:
+    var(--color-surface-alt);
+
+  border:
+    1px solid var(--color-border);
+
+  border-radius: var(--radius-sm);
+
+  outline: none;
+
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base),
+    box-shadow var(--transition-base);
+
+}
+
+
+
+.field-group textarea {
+
+  resize: vertical;
+
+  min-height: 120px;
+
+}
+
+
+
+.field-group input:focus-visible,
+.field-group textarea:focus-visible {
+
+  background:
+    var(--color-surface);
+
+  border-color:
+    var(--color-accent);
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--color-accent) 55%,
+      transparent
+    );
+
+}
+
+
+
+/* =========================
+   TWO COLUMN
+========================= */
+
+.two-col {
+
+  display: flex;
+
+  gap: var(--space-4);
+
+}
+
+
+
+.two-col .field-group {
+
+  flex: 1 1 0;
+
+  min-width: 0;
+
+}
+
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.auth-submit {
+
+  margin-top: var(--space-2);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 12px 16px;
+
+  border: none;
+  border-radius: var(--radius-sm);
+
+  cursor: pointer;
+
+  font: inherit;
+  font-weight: 600;
+
+  letter-spacing: .5px;
+
+  background:
+    var(--color-accent);
+
+  color: #fff;
+
+  transition:
+    background var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+
+}
+
+
+
+.auth-submit:hover {
+  background: var(--color-accent-hover);
+}
+
+
+
+.auth-submit:active {
+  transform: translateY(1px);
+}
+
+
+
+.auth-submit:focus-visible {
+
+  outline:
+    2px solid var(--color-accent-hover);
+
+  outline-offset: 2px;
+
+}
+
+
+
+/* =========================
+   UTILITIES
+========================= */
+
+.gap-sm {
+  gap: var(--space-2);
+}
+
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 480px) {
+
+  .auth-card {
+
+    padding:
+      var(--space-5)
+      var(--space-5)
+      var(--space-4);
+
+  }
+
+  .two-col {
+    flex-direction: column;
+  }
+
+}
+
+
+
+/* =========================
+   THEME TRANSITIONS
+========================= */
+
+body,
+.auth-card,
+.field-group input,
+.field-group textarea {
+
+  transition:
+    background 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+
+}
