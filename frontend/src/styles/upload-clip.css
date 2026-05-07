@@ -224,7 +224,48 @@
 
 }
 
+.game-search-dropdown {
 
+  display: flex;
+  flex-direction: column;
+
+  margin-top: 8px;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  background:
+    var(--color-surface);
+
+}
+
+
+
+.game-search-item {
+
+  padding: 12px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  color:
+    var(--color-text);
+
+}
+
+
+
+.game-search-item:hover {
+
+  background:
+    rgba(255,255,255,.04);
+
+}
 
 /* =========================
    NOTES
@@ -413,6 +454,41 @@
 
   color:
     var(--color-text-secondary);
+
+}
+
+.upload-progress {
+
+  width: 100%;
+
+  height: 10px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255,255,255,.06);
+
+}
+
+
+
+.upload-progress-bar {
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--color-accent),
+      #8b5cf6
+    );
+
+  transition:
+    width 200ms ease;
 
 }
 

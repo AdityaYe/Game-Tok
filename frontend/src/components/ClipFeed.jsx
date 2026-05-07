@@ -1,48 +1,103 @@
-import React, { useEffect, useRef } from 'react'
+import React, {
+  useEffect,
+  useState,
+  useRef
+} from 'react'
+
+import axios from 'axios'
+
+import {
+  FaHeart,
+  FaComment,
+  FaBookmark
+} from "react-icons/fa"
+
+
 
 const ClipFeed = ({
+
   items = [],
+
   onLike,
+
   onSave,
+
   emptyMessage = 'No clips yet.'
+
 }) => {
 
-  const videoRefs = useRef(new Map())
+
+
+  const videoRefs =
+    useRef(new Map())
+
+
+
+  const [selectedClip,
+    setSelectedClip] =
+    useState(null)
+
+  const [comments,
+    setComments] =
+    useState([])
+
+  const [commentText,
+    setCommentText] =
+    useState('')
 
 
 
   useEffect(() => {
 
-    const observer = new IntersectionObserver(
-      (entries) => {
+    const observer =
+      new IntersectionObserver(
 
-        entries.forEach((entry) => {
+        (entries) => {
 
-          const video = entry.target
+          entries.forEach((entry) => {
 
-          if (!(video instanceof HTMLVideoElement)) return
+            const video =
+              entry.target
 
-          if (
-            entry.isIntersecting &&
-            entry.intersectionRatio >= 0.6
-          ) {
+            if (
+              !(video instanceof HTMLVideoElement)
+            ) return
 
-            video.play().catch(() => {})
 
-          } else {
 
-            video.pause()
+            if (
 
-          }
+              entry.isIntersecting &&
 
-        })
+              entry.intersectionRatio >= 0.6
 
-      },
+            ) {
 
-      {
-        threshold: [0, 0.25, 0.6, 0.9, 1]
-      }
-    )
+              video.play().catch(() => {})
+
+            } else {
+
+              video.pause()
+
+            }
+
+          })
+
+        },
+
+        {
+
+          threshold: [
+            0,
+            0.25,
+            0.6,
+            0.9,
+            1
+          ]
+
+        }
+
+      )
 
 
 
@@ -52,203 +107,665 @@ const ClipFeed = ({
 
 
 
-    return () => observer.disconnect()
+    return () =>
+      observer.disconnect()
 
   }, [items])
 
 
 
-  const setVideoRef = (id) => (element) => {
+  const setVideoRef =
+    (id) => (element) => {
 
-    if (!element) {
-      videoRefs.current.delete(id)
-      return
+      if (!element) {
+
+        videoRefs.current.delete(id)
+
+        return
+
+      }
+
+      videoRefs.current.set(
+        id,
+        element
+      )
+
     }
 
-    videoRefs.current.set(id, element)
+    async function openComments(clip) {
+
+  setSelectedClip(clip)
+
+  try {
+
+    const response =
+      await axios.get(
+
+        `http://localhost:3000/api/clips/${clip._id}/comments`
+
+      )
+
+
+
+    setComments(
+      response.data.comments
+    )
+
+  } catch (err) {
+
+    console.log(err)
 
   }
 
+}
 
+
+
+function closeComments() {
+
+  setSelectedClip(null)
+
+}
+
+
+
+async function handleComment() {
+
+  if (!commentText.trim())
+    return
+
+
+
+  try {
+
+    await axios.post(
+
+      "http://localhost:3000/api/clips/comment",
+
+      {
+
+        clipId:
+          selectedClip._id,
+
+        text:
+          commentText,
+
+      },
+
+      {
+        withCredentials: true,
+      }
+
+    )
+
+
+
+    /* UPDATE COMMENT COUNT IN UI */
+
+    setSelectedClip((prev) => ({
+
+      ...prev,
+
+      commentCount:
+        (prev.commentCount || 0) + 1,
+
+    }))
+
+
+
+    /* UPDATE FEED ITEMS */
+
+    items.forEach((item) => {
+
+      if (item._id === selectedClip._id) {
+
+        item.commentCount =
+          (item.commentCount || 0) + 1
+
+      }
+
+    })
+
+
+
+    /* REFETCH COMMENTS */
+
+    const response =
+      await axios.get(
+
+        `http://localhost:3000/api/clips/${selectedClip._id}/comments`
+
+      )
+
+
+
+    setComments(
+      response.data.comments
+    )
+
+
+
+    setCommentText('')
+
+  } catch (err) {
+
+    console.log(err)
+
+  }
+
+}
 
   return (
 
     <div className="clips-page">
 
-      <div className="clips-feed" role="list">
-
-        {items.length === 0 && (
-          <div className="empty-state">
-            <p>{emptyMessage}</p>
-          </div>
-        )}
 
 
-
-        {items.map((item) => (
-
-          <section
-            key={item._id}
-            className="clip"
-            role="listitem"
-          >
-
-            <video
-              ref={setVideoRef(item._id)}
-              className="clip-video"
-              src={item.video}
-              muted
-              playsInline
-              loop
-              preload="metadata"
-            />
+      <div
+        className="clips-feed"
+        role="list"
+      >
 
 
 
-            <div className="clip-overlay">
+        {
+          items.length === 0 && (
 
-              <div
-                className="clip-overlay-gradient"
-                aria-hidden="true"
+            <div className="empty-state">
+
+              <p>{emptyMessage}</p>
+
+            </div>
+
+          )
+        }
+
+
+
+        {
+          items.map((item) => (
+
+            <section
+
+              key={item._id}
+
+              className="clip"
+
+              role="listitem"
+
+            >
+
+
+
+              <video
+
+                ref={setVideoRef(item._id)}
+
+                className="clip-video"
+
+                src={item.video}
+
+                muted
+
+                playsInline
+
+                loop
+
+                preload="metadata"
+
               />
 
 
 
-              {/* ACTIONS */}
-              <div className="clip-actions">
+              <div className="clip-overlay">
 
-                {/* LIKE */}
-                <div className="clip-action-group">
 
-                  <button
-                    onClick={
-                      onLike
-                        ? () => onLike(item)
-                        : undefined
-                    }
-                    className="clip-action"
-                    aria-label="Like clip"
-                  >
 
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                <div
+
+                  className="clip-overlay-gradient"
+
+                  aria-hidden="true"
+
+                />
+
+
+
+                <div className="clip-actions">
+
+
+
+                  {/* LIKE */}
+
+                  <div className="clip-action-group">
+
+                    <button
+
+                      onClick={
+                        onLike
+                          ? () => onLike(item)
+                          : undefined
+                      }
+
+                      className="clip-action"
+
                     >
-                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-8.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
-                    </svg>
 
-                  </button>
+                      <FaHeart />
 
-                  <div className="clip-action__count">
-                    {item.likeCount ?? 0}
+                    </button>
+
+
+
+                    <div className="clip-action__count">
+
+                      {item.likeCount ?? 0}
+
+                    </div>
+
+                  </div>
+
+
+
+                  {/* COMMENT */}
+
+                  <div className="clip-action-group">
+
+                    <button
+
+                      className="clip-action"
+
+                      onClick={() =>
+                        openComments(item)
+                      }
+
+                    >
+
+                      <FaComment />
+
+                    </button>
+
+
+
+                    <div className="clip-action__count">
+
+                      {
+                        item.commentCount || 0
+                      }
+
+                    </div>
+
+                  </div>
+
+
+
+                  {/* SAVE */}
+
+                  <div className="clip-action-group">
+
+                    <button
+
+                      className="clip-action"
+
+                      onClick={
+                        onSave
+                          ? () => onSave(item)
+                          : undefined
+                      }
+
+                    >
+
+                      <FaBookmark />
+
+                    </button>
+
+
+
+                    <div className="clip-action__count">
+
+                      {item.savesCount ?? 0}
+
+                    </div>
+
                   </div>
 
                 </div>
 
 
 
-                {/* SAVE */}
-                <div className="clip-action-group">
+                <div className="clip-content">
 
-                  <button
-                    className="clip-action"
-                    onClick={
-                      onSave
-                        ? () => onSave(item)
-                        : undefined
+
+
+                  <div className="clip-game-meta">
+
+
+
+                    {
+                      item.gameCover && (
+
+                        <img
+
+                          src={item.gameCover}
+
+                          alt={item.gameName}
+
+                          className="clip-game-cover"
+
+                        />
+
+                      )
                     }
-                    aria-label="Save clip"
-                  >
 
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
-                    </svg>
 
-                  </button>
 
-                  <div className="clip-action__count">
-                    {item.savesCount ?? 0}
+                    <div className="clip-game-info">
+
+                      <h3 className="clip-game-name">
+                        {item.gameName}
+                      </h3>
+
+
+
+                      {
+                        item.genre && (
+
+                          <span className="clip-genre-pill">
+
+                            {item.genre}
+
+                          </span>
+
+                        )
+                      }
+
+                    </div>
+
                   </div>
+
+
+
+                  <p
+                    className="clip-description"
+                    title={item.description}
+                  >
+                    {item.description}
+                  </p>
+
+
+
+                  {
+                    item.tags?.length > 0 && (
+
+                      <div className="clip-tags">
+
+                        {
+                          item.tags.map((tag) => (
+
+                            <span
+                              key={tag}
+                              className="clip-tag"
+                            >
+                              #{tag}
+                            </span>
+
+                          ))
+                        }
+
+                      </div>
+
+                    )
+                  }
+
+
+
+                  {
+                    item.creator && (
+
+                      <div className="clip-creator-row">
+
+
+
+                        <div className="clip-creator-avatar">
+
+                          {
+                            item.creator?.avatar ? (
+
+                              <img
+
+                                src={
+                                  item.creator.avatar
+                                }
+
+                                alt={item.creator.name}
+
+                                className="clip-creator-avatar-image"
+
+                              />
+
+                            ) : (
+
+                              item.creator.name?.[0]
+
+                            )
+                          }
+
+                        </div>
+
+
+
+                        <div className="clip-creator-meta">
+
+
+
+                          <div className="clip-creator-name">
+
+                            @{item.creator.name}
+
+
+
+                            {
+                              item.creator.isVerified && (
+
+                                <span className="verified-badge">
+
+                                  ✓
+
+                                </span>
+
+                              )
+                            }
+
+                          </div>
+
+
+
+                          <span className="clip-date">
+
+                            {
+                              new Date(
+                                item.createdAt
+                              ).toLocaleDateString()
+                            }
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  }
+
+
+
+                  {
+                    item.gameUrl && (
+
+                      <a
+
+                        className="clip-btn"
+
+                        href={item.gameUrl}
+
+                        target="_blank"
+
+                        rel="noreferrer"
+
+                      >
+
+                        View Game
+
+                      </a>
+
+                    )
+                  }
 
                 </div>
 
               </div>
 
+            </section>
 
+          ))
+        }
 
-              {/* CONTENT */}
-              <div className="clip-content">
-
-                <h3 className="clip-game-name">
-                  {item.gameName}
-                </h3>
-
-
-
-                {item.genre && (
-                  <p className="clip-genre">
-                    {item.genre}
-                  </p>
-                )}
+      </div>
 
 
 
-                <p
-                  className="clip-description"
-                  title={item.description}
-                >
-                  {item.description}
-                </p>
+      {
+        selectedClip && (
+
+          <div className="comments-sheet">
 
 
 
-                {item.creator && (
-                  <p className="clip-creator">
-                    @{item.creator.name}
-                  </p>
-                )}
+            <div className="comments-sheet-header">
+
+              <h3>
+                Comments
+              </h3>
 
 
 
-                {item.steamUrl && (
-                  <a
-                    className="clip-btn"
-                    href={item.steamUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View on Steam
-                  </a>
-                )}
-
-              </div>
+              <button
+                onClick={closeComments}
+              >
+                ✕
+              </button>
 
             </div>
 
-          </section>
 
-        ))}
 
-      </div>
+            <div className="comments-list">
+
+
+
+              {
+                comments.map((comment) => (
+
+                  <div
+
+                    key={comment._id}
+
+                    className="comment-item"
+
+                  >
+
+
+
+                    <div className="comment-avatar">
+
+                      {
+                        comment.user?.avatar ? (
+
+                          <img
+
+                            src={
+                              comment.user.avatar
+                            }
+
+                            alt=""
+
+                          />
+
+                        ) : (
+
+                          comment.user?.fullName?.[0]
+
+                        )
+                      }
+
+                    </div>
+
+
+
+                    <div className="comment-content">
+
+                      <strong>
+
+                        {
+                          comment.user?.fullName
+                        }
+
+                      </strong>
+
+
+
+                      <p>
+                        {comment.text}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                ))
+              }
+
+            </div>
+
+
+
+            <div className="comment-input-row">
+
+              <input
+
+                value={commentText}
+
+                onChange={(e) =>
+                  setCommentText(
+                    e.target.value
+                  )
+                }
+
+                placeholder="Add a comment"
+
+              />
+
+
+
+              <button
+                onClick={handleComment}
+              >
+                Post
+              </button>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
     </div>
 
   )
+
 }
+
+
 
 export default ClipFeed

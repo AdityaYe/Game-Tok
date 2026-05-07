@@ -2,6 +2,7 @@ const clipModel = require("../models/clip.model");
 
 const likeModel = require("../models/likes.model");
 const saveModel = require("../models/save.model");
+const commentModel = require("../models/comment.model");
 
 const cloudinary =
   require("../services/storage.service");
@@ -62,7 +63,7 @@ async function createClip(req, res) {
 
       genre: req.body.genre,
 
-      steamUrl: req.body.steamUrl,
+      gameUrl: req.body.gameUrl,
 
       video: uploadResult.secure_url,
 
@@ -71,6 +72,8 @@ async function createClip(req, res) {
       likeCount: 0,
 
       savesCount: 0,
+
+      tags: JSON.parse(req.body.tags || "[]"),
 
     });
 
@@ -226,7 +229,111 @@ async function likeClip(req, res) {
 
 }
 
+async function addComment(req, res) {
 
+  try {
+
+    const {
+
+      clipId,
+
+      text,
+
+    } = req.body;
+
+
+
+    const comment =
+      await commentModel.create({
+
+        clip: clipId,
+
+        user: req.user._id,
+
+        text,
+
+      });
+
+
+
+    await clipModel.findByIdAndUpdate(
+
+      clipId,
+
+      {
+
+        $inc: {
+          commentCount: 1,
+        },
+
+      }
+
+    );
+
+
+
+    res.status(201).json({
+
+      message:
+        "Comment added",
+
+      comment,
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+
+      message:
+        "Failed to add comment",
+
+    });
+
+  }
+
+}
+
+async function getComments(req, res) {
+
+  try {
+
+    const comments =
+      await commentModel
+
+        .find({
+          clip: req.params.clipId,
+        })
+
+        .populate(
+          "user",
+          "fullName avatar"
+        )
+
+        .sort({
+          createdAt: -1,
+        });
+
+
+
+    res.status(200).json({
+      comments,
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message:
+        "Failed to fetch comments",
+    });
+
+  }
+
+}
 
 // SAVE / UNSAVE CLIP
 async function saveClip(req, res) {
@@ -384,15 +491,11 @@ async function getSavedClips(req, res) {
 
 
 module.exports = {
-
   createClip,
-
   getClips,
-
   likeClip,
-
   saveClip,
-
   getSavedClips,
-
+  addComment,
+  getComments
 };

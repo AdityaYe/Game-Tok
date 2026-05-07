@@ -46,6 +46,16 @@ router.post(
   clipController.likeClip
 );
 
+router.get(
+  "/:clipId/comments",
+  clipController.getComments
+);
+
+router.post(
+  "/comment",
+  authMiddleware.authUserMiddleware,
+  clipController.addComment
+);
 
 /*
 POST /api/clips/save

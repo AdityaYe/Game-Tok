@@ -8,22 +8,54 @@ import React, {
 import axios from 'axios'
 
 import { useNavigate } from 'react-router-dom'
+import { FaHeart, FaBookmark} from "react-icons/fa"
 
 import '../../styles/upload-clip.css'
 
 
+
 const UploadClip = () => {
 
-  const [gameName, setGameName] = useState('')
-  const [description, setDescription] = useState('')
-  const [genre, setGenre] = useState('')
-  const [steamUrl, setSteamUrl] = useState('')
+  const [gameName, setGameName] =
+    useState('')
 
-  const [videoFile, setVideoFile] = useState(null)
+  const [description, setDescription] =
+    useState('')
 
-  const [videoURL, setVideoURL] = useState('')
+  const [selectedGame, setSelectedGame] =
+    useState(null)
 
-  const [fileError, setFileError] = useState('')
+
+
+  const [gameSearch, setGameSearch] =
+    useState('')
+
+  const [gameResults, setGameResults] =
+    useState([])
+
+  const [showDropdown, setShowDropdown] =
+    useState(false)
+
+
+
+  const [uploadProgress, setUploadProgress] =
+    useState(0)
+
+  const [isUploading, setIsUploading] =
+    useState(false)
+
+
+
+  const [videoFile, setVideoFile] =
+    useState(null)
+
+  const [videoURL, setVideoURL] =
+    useState('')
+
+  const [fileError, setFileError] =
+    useState('')
+
+  const [tags, setTags] = useState('')
 
   const fileInputRef = useRef(null)
 
@@ -31,65 +63,137 @@ const UploadClip = () => {
 
 
 
+  /* =========================
+     VIDEO PREVIEW
+  ========================= */
+
   useEffect(() => {
 
     if (!videoFile) {
+
       setVideoURL('')
+
       return
+
     }
 
-    const url = URL.createObjectURL(videoFile)
+    const url =
+      URL.createObjectURL(videoFile)
 
     setVideoURL(url)
 
-    return () => URL.revokeObjectURL(url)
+    return () =>
+      URL.revokeObjectURL(url)
 
   }, [videoFile])
 
 
 
+  /* =========================
+     GAME SEARCH
+  ========================= */
+
+  useEffect(() => {
+
+    if (gameSearch.length < 2) {
+
+      setGameResults([])
+
+      setShowDropdown(false)
+
+      return
+
+    }
+
+    const timeout = setTimeout(async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+            `http://localhost:3000/api/games/search?q=${gameSearch}`
+          )
+
+        setGameResults(response.data)
+
+        setShowDropdown(true)
+
+      } catch (err) {
+
+        console.log(err)
+
+      }
+
+    }, 400)
+
+    return () => clearTimeout(timeout)
+
+  }, [gameSearch])
+
+
+
+  /* =========================
+     FILE CHANGE
+  ========================= */
+
   const onFileChange = (e) => {
 
-    const file = e.target.files?.[0]
+    const file =
+      e.target.files?.[0]
 
     if (!file) {
+
       setVideoFile(null)
+
       setFileError('')
+
       return
+
     }
 
     if (!file.type.startsWith('video/')) {
 
-      setFileError('Please select a valid video file.')
+      setFileError(
+        'Please select a valid video file.'
+      )
 
       return
 
     }
 
     setFileError('')
+
     setVideoFile(file)
 
   }
 
 
 
+  /* =========================
+     DROPZONE
+  ========================= */
+
   const onDrop = (e) => {
 
     e.preventDefault()
 
-    const file = e.dataTransfer?.files?.[0]
+    const file =
+      e.dataTransfer?.files?.[0]
 
     if (!file) return
 
     if (!file.type.startsWith('video/')) {
 
-      setFileError('Please upload a valid video file.')
+      setFileError(
+        'Please upload a valid video file.'
+      )
 
       return
 
     }
 
     setFileError('')
+
     setVideoFile(file)
 
   }
@@ -108,38 +212,145 @@ const UploadClip = () => {
 
 
 
+  /* =========================
+     SELECT GAME
+  ========================= */
+
+  const selectGame = (game) => {
+
+    setSelectedGame(game)
+
+    setGameName(game.name)
+
+    setGameSearch(game.name)
+
+    setShowDropdown(false)
+
+  }
+
+
+
+  /* =========================
+     SUBMIT
+  ========================= */
+
   const onSubmit = async (e) => {
 
     e.preventDefault()
 
     try {
 
-      const formData = new FormData()
+      setIsUploading(true)
 
-      formData.append('gameName', gameName)
-      formData.append('description', description)
-      formData.append('genre', genre)
-      formData.append('steamUrl', steamUrl)
-
-      formData.append('clip', videoFile)
+      setUploadProgress(0)
 
 
 
-      await axios.post(
-        "http://localhost:3000/api/clips",
-        formData,
-        {
-          withCredentials: true
-        }
+      const formData =
+        new FormData()
+
+      formData.append(
+        'gameName',
+        gameName
+      )
+
+      formData.append(
+        'description',
+        description
+      )
+
+      formData.append(
+        'clip',
+        videoFile
       )
 
 
 
-      navigate("/")
+      formData.append(
+        'gameCover',
+        selectedGame?.cover || ''
+      )
 
-    } catch (err) {
+      formData.append(
+        'genre',
+        selectedGame?.genre || ''
+      )
 
-      console.error(err)
+      formData.append(
+        'gameUrl',
+        selectedGame?.website || ''
+      )
+
+      formData.append(
+        'gameRating',
+        selectedGame?.rating || 0
+      )
+
+      formData.append(
+        'tags',
+        JSON.stringify(
+            
+            tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        )
+      )
+
+
+      await axios.post(
+
+  "http://localhost:3000/api/clips",
+
+  formData,
+
+  {
+
+    withCredentials: true,
+
+    headers: {
+      "Content-Type":
+        "multipart/form-data",
+    },
+
+    onUploadProgress:
+      (progressEvent) => {
+
+        const percent =
+          Math.round(
+
+            (
+              progressEvent.loaded * 100
+            )
+
+            /
+
+            progressEvent.total
+
+          )
+
+        setUploadProgress(percent)
+
+      },
+
+  }
+)
+
+
+
+setUploadProgress(100)
+
+
+
+setTimeout(() => {
+
+  navigate("/")
+
+}, 500)} catch (err) {
+
+      console.log(err)
+
+      setIsUploading(false)
 
     }
 
@@ -147,27 +358,39 @@ const UploadClip = () => {
 
 
 
+  /* =========================
+     DISABLED
+  ========================= */
+
   const isDisabled = useMemo(() => {
 
-    return !gameName.trim() || !videoFile
+    return (
+      !gameName.trim()
+      || !videoFile
+      || isUploading
+    )
 
-  }, [gameName, videoFile])
+  }, [
+    gameName,
+    videoFile,
+    isUploading
+  ])
 
 
 
   return (
 
-    <div className="create-clip-page">
+    <div className="upload-clip-page">
 
-      <div className="create-clip-card">
+      <div className="upload-clip-card">
 
-        <header className="create-clip-header">
+        <header className="upload-clip-header">
 
-          <h1 className="create-clip-title">
+          <h1 className="upload-clip-title">
             Upload Clip
           </h1>
 
-          <p className="create-clip-subtitle">
+          <p className="upload-clip-subtitle">
             Share a gameplay moment with the community.
           </p>
 
@@ -176,9 +399,11 @@ const UploadClip = () => {
 
 
         <form
-          className="create-clip-form"
+          className="upload-clip-form"
           onSubmit={onSubmit}
         >
+
+          {/* VIDEO */}
 
           <div className="field-group">
 
@@ -211,8 +436,13 @@ const UploadClip = () => {
               <div className="file-dropzone-inner">
 
                 <div className="file-dropzone-text">
-                  <strong>Tap to upload</strong>
+
+                  <strong>
+                    Tap to upload
+                  </strong>
+
                   {' '}or drag and drop
+
                 </div>
 
                 <div className="file-hint">
@@ -225,93 +455,105 @@ const UploadClip = () => {
 
 
 
-            {fileError && (
-              <p className="error-text">
-                {fileError}
-              </p>
-            )}
+            {
+              fileError && (
+                <p className="error-text">
+                  {fileError}
+                </p>
+              )
+            }
 
           </div>
 
 
 
-          {videoURL && (
+          {/* VIDEO PREVIEW */}
 
-            <div className="video-preview">
+          {
+            videoURL && (
 
-              <video
-                className="video-preview-el"
-                src={videoURL}
-                controls
-                playsInline
-              />
+              <div className="video-preview">
 
-            </div>
+                <video
+                  className="video-preview-el"
+                  src={videoURL}
+                  controls
+                  playsInline
+                />
 
-          )}
+              </div>
+
+            )
+          }
 
 
+
+          {/* GAME SEARCH */}
 
           <div className="field-group">
 
-            <label htmlFor="gameName">
+            <label>
               Game Name
             </label>
 
             <input
-              id="gameName"
               type="text"
-              placeholder="Cyberpunk 2077"
-              value={gameName}
-              onChange={(e) =>
-                setGameName(e.target.value)
-              }
+              placeholder="Search game..."
+              value={gameSearch}
+
+              onChange={(e) => {
+
+                setGameSearch(
+                  e.target.value
+                )
+
+                setGameName(
+                  e.target.value
+                )
+
+              }}
+
               required
             />
 
-          </div>
 
 
+            {
+              showDropdown &&
+              gameResults.length > 0 && (
 
-          <div className="field-group">
+                <div className="game-search-dropdown">
 
-            <label htmlFor="genre">
-              Genre
-            </label>
+                  {
+                    gameResults.map((game) => (
 
-            <input
-              id="genre"
-              type="text"
-              placeholder="Action RPG"
-              value={genre}
-              onChange={(e) =>
-                setGenre(e.target.value)
-              }
-            />
+                      <button
+                        type="button"
+                        key={game._id || game.igdbId}
+                        className="game-search-item"
 
-          </div>
+                        onClick={() =>
+                          selectGame(game)
+                        }
+                      >
 
+                        {game.name}
 
+                      </button>
 
-          <div className="field-group">
+                    ))
+                  }
 
-            <label htmlFor="steamUrl">
-              Steam URL
-            </label>
+                </div>
 
-            <input
-              id="steamUrl"
-              type="text"
-              placeholder="https://store.steampowered.com/..."
-              value={steamUrl}
-              onChange={(e) =>
-                setSteamUrl(e.target.value)
-              }
-            />
+              )
+            }
 
           </div>
 
 
+
+          {/* DESCRIPTION */}
 
           <div className="field-group">
 
@@ -324,6 +566,7 @@ const UploadClip = () => {
               rows={4}
               placeholder="Describe the gameplay moment..."
               value={description}
+
               onChange={(e) =>
                 setDescription(e.target.value)
               }
@@ -331,7 +574,24 @@ const UploadClip = () => {
 
           </div>
 
+          {/* TAGS */}
+          
+          <div className="field-group">
+            <label>
+              Tags
+            </label>
+            
+            <input
+            type="text"
+            placeholder="fps, ranked, clutch"
+            value={tags}
+            onChange={(e) =>
+                setTags(e.target.value)
+            }
+            />
+            </div>
 
+          {/* ACTIONS */}
 
           <div className="form-actions">
 
@@ -340,10 +600,38 @@ const UploadClip = () => {
               type="submit"
               disabled={isDisabled}
             >
-              Upload Clip
+
+              {
+                isUploading
+                  ? `Uploading ${uploadProgress}%`
+                  : "Upload Clip"
+              }
+
             </button>
 
           </div>
+
+
+
+          {/* PROGRESS BAR */}
+
+          {
+            isUploading && (
+
+              <div className="upload-progress">
+
+                <div
+                  className="upload-progress-bar"
+                  style={{
+                    width:
+                      `${uploadProgress}%`
+                  }}
+                />
+
+              </div>
+
+            )
+          }
 
         </form>
 

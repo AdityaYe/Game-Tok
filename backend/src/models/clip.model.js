@@ -24,11 +24,11 @@ const clipSchema = new mongoose.Schema(
       type: String,
     },
 
-    steamUrl: {
+    gameUrl: {
       type: String,
     },
 
-    steamAppId: {
+    gameAppId: {
       type: Number,
     },
 
@@ -41,6 +41,11 @@ const clipSchema = new mongoose.Schema(
     likeCount: {
       type: Number,
       default: 0,
+    },
+
+    commentCount: {
+        type: Number,
+        default: 0,
     },
 
     savesCount: {

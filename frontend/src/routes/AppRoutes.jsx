@@ -14,6 +14,7 @@ import CreatorRegister from '../pages/auth/CreatorRegister'
 import CreatorLogin from '../pages/auth/CreatorLogin'
 
 import ChooseRegister from '../pages/auth/ChooseRegister'
+import CreatorDashboard from '../pages/creator/CreatorDashboard'
 
 import Home from '../pages/general/Home'
 import Saved from '../pages/general/Saved'
@@ -102,6 +103,11 @@ const AppRoutes = () => {
         <Route
           path="/creator/:id"
           element={<Profile />}
+        />
+
+        <Route
+        path="/creator/dashboard"
+        element={<CreatorDashboard />}
         />
 
       </Routes>
