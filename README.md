@@ -176,7 +176,7 @@ IGDB_CLIENT_SECRET=
 npm run dev
 
 # backend
-npm start
+npm run dev
 ```
 
 ---
