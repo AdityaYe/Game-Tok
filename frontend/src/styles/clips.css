@@ -508,7 +508,24 @@
 
 }
 
+.comment-delete-btn {
 
+  margin-top: 6px;
+
+  border: none;
+
+  background: transparent;
+
+  color:
+    var(--color-danger);
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  padding: 0;
+
+}
 
 @keyframes slideUp {
 

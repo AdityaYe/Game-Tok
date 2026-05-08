@@ -1,556 +1,326 @@
-import React, {
-  useEffect,
-  useState,
-} from 'react'
+import React, { useEffect, useState } from "react";
 
-import axios from 'axios'
+import axios from "axios";
 
-import { Link } from 'react-router-dom'
+import { Link } from "react-router-dom";
 
-import {
-  FaHeart,
-  FaBookmark
-} from 'react-icons/fa'
+import { FaHeart, FaBookmark } from "react-icons/fa";
 
-import '../../styles/creator-dashboard.css'
-
-
+import "../../styles/creator-dashboard.css";
 
 const CreatorDashboard = () => {
+  const [clips, setClips] = useState([]);
 
-  const [clips, setClips] =
-    useState([])
+  const [stats, setStats] = useState(null);
 
-  const [stats, setStats] =
-    useState(null)
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] =
-    useState(true)
+  const [editingId, setEditingId] = useState(null);
 
-  const [editingId, setEditingId] =
-    useState(null)
+  const [avatar, setAvatar] = useState(null);
 
-  const [avatar, setAvatar] = useState(null)
+  const [editGameName, setEditGameName] = useState("");
 
-  const [editGameName, setEditGameName] =
-    useState('')
+  const [avatarUploading, setAvaterUploading] = useState(false);
 
-  const [editDescription,
-    setEditDescription] =
-    useState('')
+  const [editDescription, setEditDescription] = useState("");
 
-  const [editTags,
-    setEditTags] =
-    useState('')
+  const [editTags, setEditTags] = useState("");
 
-
+  const [creator, setCreator] = useState(null);
 
   useEffect(() => {
-
-    fetchDashboard()
-
-  }, [])
-
-
+    fetchDashboard();
+  }, []);
 
   async function fetchDashboard() {
-
     try {
+      const response = await axios.get(
+        "http://localhost:3000/api/creator/dashboard",
 
-      const response =
-        await axios.get(
+        {
+          withCredentials: true,
+        },
+      );
 
-          'http://localhost:3000/api/creator/dashboard',
+      setClips(response.data.clips || []);
 
-          {
-            withCredentials: true,
-          }
+      setCreator(response.data.creator || null);
 
-        )
-
-
-
-      setClips(response.data.clips)
-
-      setStats(response.data.stats)
-
+      setStats(response.data.stats || null);
     } catch (err) {
-
-      console.log(err)
-
+      console.log(err);
     } finally {
-
-      setLoading(false)
-
+      setLoading(false);
     }
-
   }
 
   async function handleAvatarUpload() {
-
-  try {
-
-    const formData =
-      new FormData()
-
-    formData.append(
-      "avatar",
-      avatar
-    )
-
-
-
-    await axios.put(
-
-      "http://localhost:3000/api/creator/avatar",
-
-      formData,
-
-      {
-        withCredentials: true,
-      }
-
-    )
-
-
-
-    window.location.reload()
-
-  } catch (err) {
-
-    console.log(err)
-
-  }
-
-}
-
-async function handleEdit(clip) {
+    if (!avatar) return;
 
     try {
+      setAvaterUploading(true);
 
-      const formattedTags =
-        editTags
-          .split(',')
-          .map((tag) =>
-            tag.trim()
-          )
-          .filter(Boolean)
+      const formData = new FormData();
 
+      formData.append("avatar", avatar);
 
+      const response = await axios.put(
+        "http://localhost:3000/api/creator/avatar",
+
+        formData,
+
+        {
+          withCredentials: true,
+        },
+      );
+
+      setCreator((prev) => ({
+        ...prev,
+
+        avatar: response.data.avatar,
+      }));
+
+      setAvatar(null);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setAvaterUploading(false);
+    }
+  }
+
+  async function handleEdit(clip) {
+    try {
+      const formattedTags = editTags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
 
       await axios.put(
-
         `http://localhost:3000/api/creator/dashboard/${clip._id}`,
 
         {
-          
-          gameName:
-            editGameName,
+          gameName: editGameName,
 
-          description:
-            editDescription,
+          description: editDescription,
 
-          tags:
-            formattedTags,
-
+          tags: formattedTags,
         },
 
         {
           withCredentials: true,
-        }
-
-      )
-
-
+        },
+      );
 
       setClips((prev) =>
-
         prev.map((item) =>
-
           item._id === clip._id
-
             ? {
-
                 ...item,
 
-                gameName:
-                  editGameName,
+                gameName: editGameName,
 
-                description:
-                  editDescription,
+                description: editDescription,
 
-                tags:
-                  formattedTags,
-
+                tags: formattedTags,
               }
+            : item,
+        ),
+      );
 
-            : item
-
-        )
-
-      )
-
-
-
-      setEditingId(null)
-
+      setEditingId(null);
     } catch (err) {
-
-      console.log(err)
-
+      console.log(err);
     }
-
   }
 
   async function handleDelete(id) {
-
     try {
-
       await axios.delete(
-
         `http://localhost:3000/api/creator/dashboard/${id}`,
 
         {
           withCredentials: true,
-        }
+        },
+      );
 
-      )
-
-
-
-      setClips((prev) =>
-
-        prev.filter(
-          (clip) => clip._id !== id
-        )
-
-      )
-
-
+      setClips((prev) => prev.filter((clip) => clip._id !== id));
 
       setStats((prev) => ({
-
         ...prev,
 
-        totalClips:
-          prev.totalClips - 1,
-
-      }))
-
+        totalClips: prev.totalClips - 1,
+      }));
     } catch (err) {
-
-      console.log(err)
-
+      console.log(err);
     }
-
   }
 
   if (loading) {
-
-    return (
-
-      <div className="dashboard-loading">
-        Loading dashboard...
-      </div>
-
-    )
-
+    return <div className="dashboard-loading">Loading dashboard...</div>;
   }
 
-
-
   return (
-
     <div className="creator-dashboard-page">
-
-
-
       <div className="creator-dashboard-header">
-
         <div>
-
-          <h1 className="creator-dashboard-title">
-            Creator Dashboard
-          </h1>
+          <h1 className="creator-dashboard-title">Creator Dashboard</h1>
 
           <p className="creator-dashboard-subtitle">
             Manage your uploaded clips.
           </p>
-
         </div>
 
         <div className="dashboard-avatar-section">
-            
-            <input
+          <div className="dashboard-avatar-wrapper">
+            {creator?.avatar ? (
+              <img
+                src={creator.avatar}
+                alt={creator.name}
+                className="dashboard-current-avatar"
+              />
+            ) : (
+              <div className="dashboard-avatar-fallback">
+                {creator?.name?.[0]}
+              </div>
+            )}
+          </div>
+
+          {avatar && (
+            <img
+              src={URL.createObjectURL(avatar)}
+              alt="Preview"
+              className="dashboard-avatar-preview"
+            />
+          )}
+
+          <input
             type="file"
             accept="image/*"
-            onChange={(e) =>
-                setAvatar(
-                    e.target.files[0]
-                )
-            }/>
-            
-            <button
-            onClick={handleAvatarUpload}
-            className="dashboard-upload-btn">
-                Upload Avatar
-            </button>
+            onChange={(e) => setAvatar(e.target.files[0])}
+          />
+
+          <button onClick={handleAvatarUpload} className="dashboard-upload-btn">
+            {avatarUploading ? "Uploading..." : "Upload Avatar"}
+          </button>
         </div>
-
-        <Link
-          to="/upload-clip"
-          className="dashboard-upload-btn"
-        >
-          Upload Clip
-        </Link>
-
       </div>
-
-
 
       <div className="dashboard-stats-grid">
-
-
-
         <div className="dashboard-stat-card">
+          <span className="dashboard-stat-label">Uploaded Clips</span>
 
-          <span className="dashboard-stat-label">
-            Uploaded Clips
-          </span>
-
-          <h2>
-            {stats?.totalClips || 0}
-          </h2>
-
+          <h2>{stats?.totalClips || 0}</h2>
         </div>
 
-
-
         <div className="dashboard-stat-card">
+          <span className="dashboard-stat-label">Total Likes</span>
 
-          <span className="dashboard-stat-label">
-            Total Likes
-          </span>
-
-          <h2>
-            {stats?.totalLikes || 0}
-          </h2>
-
+          <h2>{stats?.totalLikes || 0}</h2>
         </div>
 
-
-
         <div className="dashboard-stat-card">
+          <span className="dashboard-stat-label">Total Saves</span>
 
-          <span className="dashboard-stat-label">
-            Total Saves
-          </span>
-
-          <h2>
-            {stats?.totalSaves || 0}
-          </h2>
-
+          <h2>{stats?.totalSaves || 0}</h2>
         </div>
-
       </div>
-
-
 
       <div className="dashboard-clips-grid">
+        {(clips || []).map((clip) => (
+          <div key={clip._id} className="dashboard-clip-card">
+            <video
+              src={clip.video}
+              className="dashboard-clip-video"
+              muted
+              controls
+            />
 
+            <div className="dashboard-clip-content">
+              <h3>{clip.gameName}</h3>
 
+              <p>{clip.description}</p>
 
-        {
-          clips.map((clip) => (
-
-            <div
-              key={clip._id}
-              className="dashboard-clip-card"
-            >
-
-
-
-              <video
-                src={clip.video}
-                className="dashboard-clip-video"
-                muted
-                controls
-              />
-
-
-
-              <div className="dashboard-clip-content">
-
-
-
-                <h3>
-                  {clip.gameName}
-                </h3>
-
-
-
-                <p>
-                  {clip.description}
-                </p>
-
-
-
-                {
-                  clip.tags?.length > 0 && (
-
-                    <div className="dashboard-tags">
-
-                      {
-                        clip.tags.map((tag) => (
-
-                          <span
-                            key={tag}
-                            className="dashboard-tag"
-                          >
-                            #{tag}
-                          </span>
-
-                        ))
-                      }
-
-                    </div>
-
-                  )
-                }
-
-
-
-                <div className="dashboard-clip-stats">
-
-                  <span>
-                    <FaHeart />
-                    {' '}
-                    {clip.likeCount || 0}
-                  </span>
-
-
-
-                  <span>
-                    <FaBookmark />
-                    {' '}
-                    {clip.savesCount || 0}
-                  </span>
-
+              {(clip.tags || []).length > 0 && (
+                <div className="dashboard-tags">
+                  {(clip.tags || []).map((tag) => (
+                    <span key={tag} className="dashboard-tag">
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
+              )}
 
+              <div className="dashboard-clip-stats">
+                <span>
+                  <FaHeart /> {clip.likeCount || 0}
+                </span>
 
-
-                {
-                  editingId === clip._id && (
-
-                    <div className="dashboard-edit-form">
-
-                        <input
-                        type="text"
-                        value={editGameName}
-                        onChange={(e) =>
-                            setEditGameName(
-                                e.target.value)
-                            }
-                            placeholder="Game Name"
-                            />
-
-                      <textarea
-                        value={editDescription}
-                        onChange={(e) =>
-                          setEditDescription(
-                            e.target.value
-                          )
-                        }
-                        placeholder="Description"
-                      />
-
-
-
-                      <input
-
-                        type="text"
-
-                        value={editTags}
-
-                        onChange={(e) =>
-                          setEditTags(
-                            e.target.value
-                          )
-                        }
-
-                        placeholder="fps, ranked, funny"
-
-                      />
-
-
-
-                      <button
-                        className="dashboard-save-btn"
-                        onClick={() =>
-                          handleEdit(clip)
-                        }
-                      >
-                        Save Changes
-                      </button>
-
-                    </div>
-
-                  )
-                }
-
-                {
-                editingId !== clip._id && (
-                
-                <button
-                className="dashboard-edit-btn"
-                onClick={() => {
-                    setEditingId(clip._id)
-                    
-                    setEditGameName(
-                        clip.gameName || ''
-                    )
-                    
-                    setEditDescription(
-                        clip.description || ''
-                    )
-                    
-                    setEditTags(
-                        clip.tags?.join(', ') || ''
-                    )
-                }}>Edit Clip</button>
-                )
-                }
-
-                <button
-
-                  className="dashboard-delete-btn"
-
-                  onClick={() =>
-                    handleDelete(clip._id)
-                  }
-
-                >
-
-                  Delete Clip
-
-                </button>
-
+                <span>
+                  <FaBookmark /> {clip.savesCount || 0}
+                </span>
               </div>
 
+              {editingId === clip._id && (
+                <div className="dashboard-edit-form">
+                  <input
+                    type="text"
+                    value={editGameName}
+                    onChange={(e) => setEditGameName(e.target.value)}
+                    placeholder="Game Name"
+                  />
+
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Description"
+                  />
+
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    placeholder="fps, ranked, funny"
+                  />
+
+                  <button
+                    className="dashboard-save-btn"
+                    onClick={() => handleEdit(clip)}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              )}
+
+              {editingId !== clip._id && (
+                <button
+                  className="dashboard-edit-btn"
+                  onClick={() => {
+                    setEditingId(clip._id);
+
+                    setEditGameName(clip.gameName || "");
+
+                    setEditDescription(clip.description || "");
+
+                    setEditTags((clip.tags || []).join(", "));
+                  }}
+                >
+                  Edit Clip
+                </button>
+              )}
+
+              <button
+                className="dashboard-delete-btn"
+                onClick={() => handleDelete(clip._id)}
+              >
+                Delete Clip
+              </button>
             </div>
-
-          ))
-        }
-
+          </div>
+        ))}
       </div>
-
     </div>
+  );
+};
 
-  )
-
-}
-
-
-
-export default CreatorDashboard
+export default CreatorDashboard;

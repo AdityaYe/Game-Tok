@@ -57,6 +57,12 @@ router.post(
   clipController.addComment
 );
 
+router.delete(
+  "/comment/:commentId",
+  authMiddleware.authUserMiddleware,
+  clipController.deleteComment
+);
+
 /*
 POST /api/clips/save
 Save clip
