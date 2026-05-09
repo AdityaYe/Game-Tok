@@ -22,6 +22,25 @@ router.get(
   creatorController.getCreatorById
 );
 
+router.post(
+  "/follow",
+  authMiddleware.authUserMiddleware,
+  creatorController.followCreator
+
+)
+
+router.put(
+
+  "/banner",
+
+  authMiddleware.authCreatorMiddleware,
+
+  upload.single("banner"),
+
+  creatorController.updateBanner
+
+)
+
 router.put(
 
   "/avatar",

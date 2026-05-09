@@ -23,6 +23,8 @@ const ClipFeed = ({
 
   const [activeVideo, setActiveVideo] = useState(null);
 
+  const [followingCreators, setFollowingCreators] = useState([]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -167,6 +169,30 @@ const ClipFeed = ({
     }
   }
 
+  async function handleFollow(creatorId) {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/creator/follow",
+
+        {
+          creatorId,
+        },
+
+        {
+          withCredentials: true,
+        },
+      );
+
+      if (response.data.following) {
+        setFollowingCreators((prev) => [...prev, creatorId]);
+      } else {
+        setFollowingCreators((prev) => prev.filter((id) => id !== creatorId));
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
     <div className="clips-page">
       <div className="clips-feed" role="list">
@@ -305,6 +331,14 @@ const ClipFeed = ({
                       <span className="clip-date">
                         {new Date(item.createdAt).toLocaleDateString()}
                       </span>
+                      <button
+                        className="clip-follow-btn"
+                        onClick={() => handleFollow(item.creator._id)}
+                      >
+                        {followingCreators.includes(item.creator._id)
+                          ? "Following"
+                          : "Follow"}
+                      </button>
                     </div>
                   </div>
                 )}

@@ -224,6 +224,7 @@ const CreatorDashboard = () => {
 
           <h2>{stats?.totalSaves || 0}</h2>
         </div>
+
       </div>
 
       <div className="dashboard-clips-grid">

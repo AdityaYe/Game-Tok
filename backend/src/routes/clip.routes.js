@@ -1,6 +1,7 @@
 const express = require("express");
 const clipController = require("../controllers/clip.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
+const creatorController = require("../controllers/creator.controller")
 
 const multer = require("multer");
 
@@ -9,7 +10,6 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
 });
-
 
 /*
 POST /api/clips
@@ -20,21 +20,15 @@ router.post(
   "/",
   authMiddleware.authCreatorMiddleware,
   upload.single("clip"),
-  clipController.createClip
+  clipController.createClip,
 );
-
 
 /*
 GET /api/clips
 Get feed
 [protected user]
 */
-router.get(
-  "/",
-  authMiddleware.authUserMiddleware,
-  clipController.getClips
-);
-
+router.get("/", authMiddleware.authUserMiddleware, clipController.getClips);
 
 /*
 POST /api/clips/like
@@ -43,24 +37,21 @@ Like clip
 router.post(
   "/like",
   authMiddleware.authUserMiddleware,
-  clipController.likeClip
+  clipController.likeClip,
 );
 
-router.get(
-  "/:clipId/comments",
-  clipController.getComments
-);
+router.get("/:clipId/comments", clipController.getComments);
 
 router.post(
   "/comment",
   authMiddleware.authUserMiddleware,
-  clipController.addComment
+  clipController.addComment,
 );
 
 router.delete(
   "/comment/:commentId",
   authMiddleware.authUserMiddleware,
-  clipController.deleteComment
+  clipController.deleteComment,
 );
 
 /*
@@ -70,9 +61,8 @@ Save clip
 router.post(
   "/save",
   authMiddleware.authUserMiddleware,
-  clipController.saveClip
+  clipController.saveClip,
 );
-
 
 /*
 GET /api/clips/save
@@ -81,7 +71,13 @@ Get saved clips
 router.get(
   "/save",
   authMiddleware.authUserMiddleware,
-  clipController.getSavedClips
+  clipController.getSavedClips,
+);
+
+router.post(
+  "/follow",
+  authMiddleware.authUserMiddleware,
+  creatorController.followCreator,
 );
 
 module.exports = router;

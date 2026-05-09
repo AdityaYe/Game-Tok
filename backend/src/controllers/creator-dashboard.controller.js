@@ -23,6 +23,8 @@ async function getCreatorDashboard(req, res) {
 
       stats: {
         totalClips: clips.length,
+        followerCount: req.creator.followers?.length|| 0,
+        followingCount: req.creator.following?.length|| 0,
         totalLikes,
         totalSaves,
       },

@@ -6,6 +6,8 @@ const clipRoutes = require('./routes/clip.routes');
 const creatorRoutes = require('./routes/creator.routes');
 const gameRoutes = require("./routes/game.routes");
 const creatorDashboardRoutes = require("./routes/creator-dashboard.routes")
+const searchRoutes = require("./routes/search.routes"
+  )
 const cors = require('cors');
 
 const app = express();
@@ -29,5 +31,6 @@ app.use("/api/clips", clipRoutes);
 app.use("/api/creator/dashboard", creatorDashboardRoutes);
 app.use("/api/creator", creatorRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api/search",searchRoutes);
 
 module.exports = app;
