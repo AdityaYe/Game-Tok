@@ -1,28 +1,19 @@
-const express =
-  require("express")
+const express = require("express");
 
+const router = express.Router();
 
-
-const router =
-  express.Router()
-
-
-
-const searchController =
-  require(
-    "../controllers/search.controller"
-  )
-
-
+const searchController = require("../controllers/search.controller");
 
 router.get(
-
   "/",
 
-  searchController.searchAll
+  searchController.searchAll,
+);
 
-)
+router.get(
+  "/trending-tags",
 
+  searchController.getTrendingTags,
+);
 
-
-module.exports = router
+module.exports = router;

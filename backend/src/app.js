@@ -1,22 +1,28 @@
 // create server
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const authRoutes = require('./routes/auth.routes');
-const clipRoutes = require('./routes/clip.routes');
-const creatorRoutes = require('./routes/creator.routes');
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const authRoutes = require("./routes/auth.routes");
+const clipRoutes = require("./routes/clip.routes");
+const creatorRoutes = require("./routes/creator.routes");
 const gameRoutes = require("./routes/game.routes");
-const creatorDashboardRoutes = require("./routes/creator-dashboard.routes")
-const searchRoutes = require("./routes/search.routes"
-  )
-const cors = require('cors');
+const creatorDashboardRoutes = require("./routes/creator-dashboard.routes");
+const searchRoutes = require("./routes/search.routes");
+const notificationRoutes = require("./routes/notification.routes");
+const cors = require("cors");
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || API_BASE_URL,
+    origin: process.env.CLIENT_URL,
     credentials: true,
-  })
+  }),
+);
+
+app.use(
+  "/api/notifications",
+
+  notificationRoutes,
 );
 
 app.use(cookieParser());
@@ -31,6 +37,6 @@ app.use("/api/clips", clipRoutes);
 app.use("/api/creator/dashboard", creatorDashboardRoutes);
 app.use("/api/creator", creatorRoutes);
 app.use("/api/games", gameRoutes);
-app.use("/api/search",searchRoutes);
+app.use("/api/search", searchRoutes);
 
 module.exports = app;

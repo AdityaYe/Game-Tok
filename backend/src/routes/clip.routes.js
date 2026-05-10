@@ -1,7 +1,7 @@
 const express = require("express");
 const clipController = require("../controllers/clip.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
-const creatorController = require("../controllers/creator.controller")
+const creatorController = require("../controllers/creator.controller");
 
 const multer = require("multer");
 
@@ -78,6 +78,22 @@ router.post(
   "/follow",
   authMiddleware.authUserMiddleware,
   creatorController.followCreator,
+);
+
+router.post(
+  "/view",
+
+  authMiddleware.authUserMiddleware,
+
+  clipController.trackView,
+);
+
+router.post(
+  "/watch-time",
+
+  authMiddleware.authUserMiddleware,
+
+  clipController.trackWatchTime,
 );
 
 module.exports = router;

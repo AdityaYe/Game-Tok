@@ -15,7 +15,7 @@ async function getCreatorById(req, res) {
 
       .populate("followers", "name avatar")
       .populate("following", "name avatar");
-      
+
     if (!creator) {
       return res.status(404).json({
         message: "Creator not found",
@@ -139,6 +139,20 @@ async function followCreator(req, res) {
     await creator.save();
 
     await user.save();
+
+    await createNotification({
+      recipient: creatorId,
+      sender: req.user._id,
+      type: "follow",
+    });
+
+    io.to(clip.creator.toString()).emit(
+      "new_notification",
+      {
+        type: "like",
+        sender: req.user.name,
+      },
+    );
 
     res.status(200).json({
       following: true,

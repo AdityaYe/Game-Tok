@@ -10,23 +10,66 @@ async function getCreatorDashboard(req, res) {
 
     const totalLikes = clips.reduce(
       (sum, clip) => sum + (clip.likeCount || 0),
+
       0,
     );
 
     const totalSaves = clips.reduce(
       (sum, clip) => sum + (clip.savesCount || 0),
+
       0,
     );
 
+    const totalViews = clips.reduce(
+      (sum, clip) => sum + (clip.views || 0),
+
+      0,
+    );
+
+    const totalWatchTime = clips.reduce(
+      (sum, clip) => sum + (clip.watchTime || 0),
+
+      0,
+    );
+
+    const engagementRate =
+      totalViews > 0 ? ((totalLikes + totalSaves) / totalViews) * 100 : 0;
+
     res.status(200).json({
+      creator: {
+        _id: req.creator._id,
+
+        name: req.creator.name,
+
+        avatar: req.creator.avatar,
+
+        bio: req.creator.bio,
+
+        banner: req.creator.banner,
+
+        socials: req.creator.socials,
+
+        isVerified: req.creator.isVerified,
+      },
+
       clips,
 
       stats: {
         totalClips: clips.length,
-        followerCount: req.creator.followers?.length|| 0,
-        followingCount: req.creator.following?.length|| 0,
+
+        followerCount: req.creator.followers?.length || 0,
+
+        followingCount: req.creator.following?.length || 0,
+
         totalLikes,
+
         totalSaves,
+
+        totalViews,
+
+        totalWatchTime,
+
+        engagementRate,
       },
     });
   } catch (err) {
@@ -90,6 +133,7 @@ async function deleteClip(req, res) {
 
     const clip = await clipModel.findOne({
       _id: clipId,
+
       creator: req.creator._id,
     });
 
@@ -115,6 +159,8 @@ async function deleteClip(req, res) {
 
 module.exports = {
   getCreatorDashboard,
+
   updateClip,
+
   deleteClip,
 };

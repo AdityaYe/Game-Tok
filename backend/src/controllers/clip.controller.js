@@ -73,6 +73,24 @@ async function createClip(req, res) {
   }
 }
 
+function calculateTrendingScore(clip) {
+  const likes = clip.likeCount || 0;
+
+  const comments = clip.commentCount || 0;
+
+  const saves = clip.savesCount || 0;
+
+  const views = clip.views || 0;
+
+  const ageHours = (Date.now() - new Date(clip.createdAt)) / (1000 * 60 * 60);
+
+  const engagementScore = likes * 1 + comments * 3 + saves * 5 + views * 0.1;
+
+  const recencyBoost = Math.max(48 - ageHours, 0);
+
+  return engagementScore + recencyBoost;
+}
+
 // GET ALL CLIPS
 async function getClips(req, res) {
   try {
@@ -102,8 +120,12 @@ async function getClips(req, res) {
 
     const totalClips = await clipModel.countDocuments();
 
+    const rankedClips = clips.sort(
+      (a, b) => calculateTrendingScore(b) - calculateTrendingScore(a),
+    );
+
     res.status(200).json({
-      clips,
+      clips: rankedClips,
 
       currentPage: page,
 
@@ -159,6 +181,23 @@ async function likeClip(req, res) {
       },
     });
 
+    io.to(clip.creator.toString()).emit(
+      "new_notification",
+
+      {
+        type: "like",
+
+        sender: req.user.name,
+      },
+    );
+
+    await createNotification({
+      recipient: clip.creator,
+      sender: req.user._id,
+      type: "like",
+      clip: clip._id,
+    });
+
     res.status(201).json({
       message: "Clip liked successfully",
 
@@ -189,6 +228,16 @@ async function addComment(req, res) {
       text,
     });
 
+    io.to(clip.creator.toString()).emit(
+      "new_notification",
+
+      {
+        type: "like",
+
+        sender: req.user.name,
+      },
+    );
+
     await clipModel.findByIdAndUpdate(
       clipId,
 
@@ -198,6 +247,13 @@ async function addComment(req, res) {
         },
       },
     );
+
+    await createNotification({
+      recipient: clip.creator,
+      sender: req.user._id,
+      type: "comment",
+      clip: clip._id,
+    });
 
     res.status(201).json({
       message: "Comment added",
@@ -386,6 +442,62 @@ async function getSavedClips(req, res) {
   }
 }
 
+async function trackView(req, res) {
+  try {
+    const { clipId } = req.body;
+
+    await clipModel.findByIdAndUpdate(
+      clipId,
+
+      {
+        $inc: {
+          views: 1,
+        },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "Failed to track view",
+    });
+  }
+}
+
+async function trackWatchTime(req, res) {
+  try {
+    const {
+      clipId,
+
+      seconds,
+    } = req.body;
+
+    await clipModel.findByIdAndUpdate(
+      clipId,
+
+      {
+        $inc: {
+          watchTime: seconds,
+        },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "Failed to track watch time",
+    });
+  }
+}
+
 module.exports = {
   createClip,
   getClips,
@@ -395,4 +507,6 @@ module.exports = {
   addComment,
   deleteComment,
   getComments,
+  trackView,
+  trackWatchTime,
 };

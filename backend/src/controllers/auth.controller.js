@@ -3,21 +3,13 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
 function generateToken(id) {
-  return jwt.sign(
-    { id },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
-
 
 // USER REGISTER
 async function registerUser(req, res) {
-
   try {
-
     const { fullName, email, password } = req.body;
 
     const existingUser = await userModel.findOne({ email });
@@ -48,7 +40,6 @@ async function registerUser(req, res) {
         email: user.email,
       },
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Server error",
@@ -56,13 +47,9 @@ async function registerUser(req, res) {
   }
 }
 
-
-
 // USER LOGIN
 async function loginUser(req, res) {
-
   try {
-
     const { email, password } = req.body;
     const user = await userModel.findOne({ email });
 
@@ -72,10 +59,7 @@ async function loginUser(req, res) {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(400).json({
@@ -100,8 +84,6 @@ async function loginUser(req, res) {
   }
 }
 
-
-
 function logoutUser(req, res) {
   res.clearCookie("token");
   res.status(200).json({
@@ -109,17 +91,10 @@ function logoutUser(req, res) {
   });
 }
 
-
-
 // CREATOR REGISTER
 async function registerCreator(req, res) {
-
   try {
-    const {
-      name,
-      email,
-      password,
-    } = req.body;
+    const { name, email, password } = req.body;
 
     const existingCreator = await userModel.findOne({
       email,
@@ -131,10 +106,7 @@ async function registerCreator(req, res) {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      10
-    );
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const creator = await userModel.create({
       fullName: name,
@@ -169,7 +141,6 @@ async function registerCreator(req, res) {
 
 // CREATOR LOGIN
 async function loginCreator(req, res) {
-
   try {
     const { email, password } = req.body;
 
@@ -184,10 +155,7 @@ async function loginCreator(req, res) {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      creator.password
-    );
+    const isPasswordValid = await bcrypt.compare(password, creator.password);
 
     if (!isPasswordValid) {
       return res.status(400).json({
@@ -197,11 +165,19 @@ async function loginCreator(req, res) {
 
     const token = generateToken(creator._id);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    res.cookie(
+      "token",
+
+      token,
+
+      {
+        httpOnly: true,
+
+        secure: process.env.NODE_ENV === "production",
+
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      },
+    );
 
     res.status(200).json({
       message: "Creator logged in successfully",
@@ -211,9 +187,7 @@ async function loginCreator(req, res) {
         email: creator.email,
         isCreator: creator.isCreator,
       },
-
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Server error",

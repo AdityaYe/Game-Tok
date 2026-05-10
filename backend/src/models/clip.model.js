@@ -44,8 +44,8 @@ const clipSchema = new mongoose.Schema(
     },
 
     commentCount: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
 
     savesCount: {
@@ -55,12 +55,24 @@ const clipSchema = new mongoose.Schema(
 
     tags: {
       type: [String],
-      default: []
-    }
+      default: [],
+    },
+    
+    views: {
+      type: Number,
+
+      default: 0,
+    },
+
+    watchTime: {
+      type: Number,
+
+      default: 0,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 clipSchema.index({ gameName: "text" });

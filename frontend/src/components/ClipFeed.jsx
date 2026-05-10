@@ -38,16 +38,19 @@ const ClipFeed = ({
           if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
             setActiveVideo(clipId);
 
+            axios.post(
+              "http://localhost:3000/api/clips/view",
+              { clipId },
+              { withCredentials: true },
+            );
+
             video.play().catch(() => {});
           } else {
             video.pause();
           }
         });
       },
-
-      {
-        threshold: [0.25, 0.7, 1],
-      },
+      { threshold: [0.25, 0.7, 1] },
     );
 
     videoRefs.current.forEach((video) => {
@@ -193,6 +196,34 @@ const ClipFeed = ({
     }
   }
 
+  const watchTimers = useRef({});
+
+  function handleWatchTime(clipId, currentTime) {
+    if (watchTimers.current[clipId]) return;
+
+    watchTimers.current[clipId] = setTimeout(async () => {
+      try {
+        await axios.post(
+          "http://localhost:3000/api/clips/watch-time",
+
+          {
+            clipId,
+
+            seconds: 5,
+          },
+
+          {
+            withCredentials: true,
+          },
+        );
+      } catch (err) {
+        console.log(err);
+      }
+
+      delete watchTimers.current[clipId];
+    }, 5000);
+  }
+
   return (
     <div className="clips-page">
       <div className="clips-feed" role="list">
@@ -211,6 +242,9 @@ const ClipFeed = ({
           >
             <video
               ref={setVideoRef(item._id)}
+              onTimeUpdate={(e) =>
+                handleWatchTime(item._id, e.target.currentTime)
+              }
               className="clip-video"
               data-id={item._id}
               src={activeVideo === item._id ? item.video : undefined}
