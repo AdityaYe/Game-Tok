@@ -21,8 +21,8 @@ const asyncHandler = require("../utils/asyncHandler");
 
 router.get(
   "/",
-  authCreatorMiddleware,
-  getCreatorDashboard
+  asyncHandler(authCreatorMiddleware,
+  getCreatorDashboard)
 );
 
 router.put(
