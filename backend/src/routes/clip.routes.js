@@ -1,99 +1,22 @@
 const express = require("express");
-const clipController = require("../controllers/clip.controller");
-const authMiddleware = require("../middlewares/auth.middleware");
-const creatorController = require("../controllers/creator.controller");
 
-const multer = require("multer");
+const clipController = require("../controllers/clip.controller");
+const {authUserMiddleware,authCreatorMiddleware} = require("../middlewares/auth.middleware");
+const upload = require("../middlewares/upload.middleware");
+const asyncHandler = require("../utils/asyncHandler");
+const {createClipSchema,commentSchema} = require("../validators/clip.validator");
 
 const router = express.Router();
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
-
-/*
-POST /api/clips
-Create clip
-[protected creator]
-*/
-router.post(
-  "/",
-  authMiddleware.authCreatorMiddleware,
-  upload.single("clip"),
-  clipController.createClip,
-);
-
-/*
-GET /api/clips
-Get feed
-[protected user]
-*/
-router.get("/", authMiddleware.authUserMiddleware, clipController.getClips);
-
-/*
-POST /api/clips/like
-Like clip
-*/
-router.post(
-  "/like",
-  authMiddleware.authUserMiddleware,
-  clipController.likeClip,
-);
-
-router.get("/:clipId/comments", clipController.getComments);
-
-router.post(
-  "/comment",
-  authMiddleware.authUserMiddleware,
-  clipController.addComment,
-);
-
-router.delete(
-  "/comment/:commentId",
-  authMiddleware.authUserMiddleware,
-  clipController.deleteComment,
-);
-
-/*
-POST /api/clips/save
-Save clip
-*/
-router.post(
-  "/save",
-  authMiddleware.authUserMiddleware,
-  clipController.saveClip,
-);
-
-/*
-GET /api/clips/save
-Get saved clips
-*/
-router.get(
-  "/save",
-  authMiddleware.authUserMiddleware,
-  clipController.getSavedClips,
-);
-
-router.post(
-  "/follow",
-  authMiddleware.authUserMiddleware,
-  creatorController.followCreator,
-);
-
-router.post(
-  "/view",
-
-  authMiddleware.authUserMiddleware,
-
-  clipController.trackView,
-);
-
-router.post(
-  "/watch-time",
-
-  authMiddleware.authUserMiddleware,
-
-  clipController.trackWatchTime,
-);
+router.post("/",authCreatorMiddleware, validate(createClipSchema), upload.single("clip"),asyncHandler(clipController.createClip),);
+router.get("/", authUserMiddleware, asyncHandler(clipController.getClips));
+router.post("/:clipId/like", authUserMiddleware, asyncHandler(clipController.likeClip),);
+router.post("/:clipId/save", authUserMiddleware,asyncHandler(clipController.saveClip),);
+router.get("/saved", authUserMiddleware,asyncHandler(clipController.getSavedClips));
+router.get("/:clipId/comments", asyncHandler(clipController.getComments));
+router.post("/:clipId/comments",authUserMiddleware,asyncHandler(clipController.addComment),);
+router.delete("/comments/:commentId",authUserMiddleware, asyncHandler(clipController.deleteComment),);
+router.post("/:clipId/view", authUserMiddleware,asyncHandler(clipController.trackView));
+router.post("/:clipId/watch-time",authUserMiddleware,asyncHandler(clipController.trackWatchTime));
 
 module.exports = router;

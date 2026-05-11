@@ -1,88 +1,45 @@
-const userModel = require("../models/user.model");
-
 const jwt = require("jsonwebtoken");
 
+const userModel = require("../models/user.model");
 
-async function authCreatorMiddleware(
-  req,
-  res,
-  next
-) {
+const env = require("../config/env");
+
+const ApiError = require("../utils/ApiError");
+
+async function authMiddleware(req, res, next) {
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({
-      message: "Please login first",
-    });
+    return next(new ApiError(401, "Authentication required"));
   }
 
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
+  const decoded = jwt.verify(token, env.jwtSecret);
+
+  const user = await userModel
+    .findById(decoded.id)
+    .select(
+      "_id fullName avatar isCreator followers following socials bio banner",
     );
 
-    const creator = await userModel.findById(
-      decoded.id
-    );
-
-    if (!creator || !creator.isCreator) {
-      return res.status(403).json({
-        message: "Creator access required",
-      });
-    }
-
-    req.creator = creator;
-    next();
-
-  } catch (err) {
-    return res.status(401).json({
-      message: "Invalid token",
-    });
+  if (!user) {
+    return next(new ApiError(401, "User not found"));
   }
+
+  req.user = user;
+
+  next();
 }
 
-async function authUserMiddleware(req, res, next) {
-
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({
-      message: "Please login first",
-    });
+function requireCreator(req, res, next) {
+  if (!req.user.isCreator) {
+    return next(new ApiError(403, "Creator access required"));
   }
 
-  try {
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    const user = await userModel.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({
-        message: "User not found",
-      });
-    }
-
-    req.user = user;
-
-    next();
-
-  } catch (err) {
-
-    return res.status(401).json({
-      message: "Invalid token",
-    });
-
-  }
-
+  next();
 }
-
 
 module.exports = {
-  authCreatorMiddleware,
-  authUserMiddleware,
+  authMiddleware,
+
+  requireCreator,
 };

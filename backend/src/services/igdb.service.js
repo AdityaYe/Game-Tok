@@ -2,30 +2,31 @@ const axios = require("axios");
 
 const gameModel = require("../models/game.model");
 
-const NodeCache =
-  require("node-cache");
+const NodeCache = require("node-cache");
 
-const cache =
-  new NodeCache({
-    stdTTL: 86400,
-  });
+if (
+  !process.env.TWITCH_CLIENT_ID ||
+  !process.env.TWITCH_CLIENT_SECRET
+) {
+  throw new Error("Missing Twitch environment variables");
+}
 
+const cache = new NodeCache({
+  stdTTL: 86400,
+});
 
+const igdbClient = axios.create({
+  baseURL: "https://api.igdb.com/v4",
+  timeout: 5000,
+});
 
 let cachedToken = null;
-
 let tokenExpiry = 0;
 
-
-
 async function getAccessToken() {
-
   const now = Date.now();
 
-  if (
-    cachedToken &&
-    now < tokenExpiry
-  ) {
+  if (cachedToken && now < tokenExpiry) {
     return cachedToken;
   }
 
@@ -34,139 +35,130 @@ async function getAccessToken() {
     null,
     {
       params: {
-        client_id:
-          process.env.TWITCH_CLIENT_ID,
-
-        client_secret:
-          process.env.TWITCH_CLIENT_SECRET,
-
-        grant_type:
-          "client_credentials",
+        client_id: process.env.TWITCH_CLIENT_ID,
+        client_secret: process.env.TWITCH_CLIENT_SECRET,
+        grant_type: "client_credentials",
       },
+      timeout: 5000,
     }
   );
 
-  console.log(response.data)
-
-  cachedToken =
-    response.data.access_token;
+  cachedToken = response.data.access_token;
 
   tokenExpiry =
-    now + (
-      response.data.expires_in * 1000
-    );
+    now + response.data.expires_in * 1000;
 
   return cachedToken;
-
 }
 
-
+function sanitizeQuery(query) {
+  return query.replace(/"/g, "").trim();
+}
 
 async function searchGames(query) {
-
   const normalized =
-    query.toLowerCase().trim();
+    sanitizeQuery(query).toLowerCase();
 
-
+  const cacheKey = `games:${normalized}`;
 
   /* =========================
-     CHECK DATABASE FIRST
+     MEMORY CACHE
   ========================= */
 
-  const existingGames =
-    await gameModel.find({
+  const memoryCache = cache.get(cacheKey);
 
+  if (memoryCache) {
+    console.log("NODE CACHE HIT");
+
+    return memoryCache;
+  }
+
+  /* =========================
+     DATABASE CACHE
+  ========================= */
+
+  const existingGames = await gameModel
+    .find({
       name: {
         $regex: normalized,
         $options: "i",
       },
-
-    }).limit(8);
-
-
+    })
+    .limit(8)
+    .lean();
 
   if (existingGames.length > 0) {
-
     console.log("MONGO CACHE HIT");
 
-    return existingGames;
+    cache.set(cacheKey, existingGames);
 
+    return existingGames;
   }
- /* =========================
-     FALLBACK TO IGDB
+
+  /* =========================
+     IGDB API FALLBACK
   ========================= */
 
   console.log("IGDB API CALL");
 
+  const token = await getAccessToken();
 
-
-  const token =
-    await getAccessToken();
-
-
-
-  const response = await axios.post(
-
-    "https://api.igdb.com/v4/games",
-
+  const response = await igdbClient.post(
+    "/games",
     `
-    search "${query}";
+    search "${normalized}";
     
     fields
-    id,
-    name,
-    slug,
-    rating,
-    
+      id,
+      name,
+      slug,
+      rating;
+
     limit 8;
     `,
-
     {
       headers: {
-
         "Client-ID":
           process.env.TWITCH_CLIENT_ID,
 
-        Authorization:
-          `Bearer ${token}`,
-
+        Authorization: `Bearer ${token}`,
       },
     }
   );
 
- const formattedGames =
-    response.data.map((game) => ({
-
-       igdbId: game.id,
+  const formattedGames = response.data.map(
+    (game) => ({
+      igdbId: game.id,
 
       name: game.name,
 
       slug: game.slug,
 
-      rating:
-        game.rating || 0,
+      rating: game.rating || 0,
 
-      website:
-        `https://www.igdb.com/games/${game.slug}`
+      website: `https://www.igdb.com/games/${game.slug}`,
+    })
+  );
 
-    }));
-
-     if (formattedGames.length > 0) {
-
-    await gameModel.insertMany(
-
-      formattedGames,
-
-      {
-        ordered: false,
-      }
-
-    ).catch(() => {});
-
+  if (formattedGames.length > 0) {
+    try {
+      await gameModel.insertMany(
+        formattedGames,
+        {
+          ordered: false,
+        }
+      );
+    } catch (err) {
+      console.error(
+        "Failed to cache games:",
+        err.message
+      );
+    }
   }
 
-   return formattedGames;
+  cache.set(cacheKey, formattedGames);
 
+  return formattedGames;
 }
 
 module.exports = {

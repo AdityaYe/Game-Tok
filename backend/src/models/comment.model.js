@@ -1,59 +1,52 @@
-const mongoose =
-  require("mongoose");
+const mongoose = require("mongoose");
 
-
-
-const commentSchema =
-  new mongoose.Schema(
-
-    {
-
-      clip: {
-
-        type:
-          mongoose.Schema.Types.ObjectId,
-
-        ref: "clip",
-
-        required: true,
-
-      },
-
-
-
-      user: {
-
-        type:
-          mongoose.Schema.Types.ObjectId,
-
-        ref: "user",
-
-        required: true,
-
-      },
-
-
-
-      text: {
-
-        type: String,
-
-        required: true,
-
-      },
-
+const commentSchema = new mongoose.Schema(
+  {
+    clip: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Clip",
+      required: true,
+      index: true,
     },
 
-    {
-      timestamps: true,
-    }
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-  );
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 300,
+    },
 
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
 
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
-module.exports =
-  mongoose.model(
-    "comment",
-    commentSchema
-  );
+commentSchema.index({
+  clip: 1,
+  createdAt: -1,
+});
+
+commentSchema.index({
+  user: 1,
+});
+
+const Comment = mongoose.model("Comment", commentSchema);
+
+module.exports = Comment;

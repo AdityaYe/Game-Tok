@@ -5,83 +5,126 @@ const userSchema = new mongoose.Schema(
     fullName: {
       type: String,
       required: true,
+      trim: true,
+      maxlength: 50,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
 
     password: {
       type: String,
       required: true,
+      select: false,
     },
 
     isCreator: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     avatar: {
       type: String,
+      default: "",
+    },
+
+    avatarPublicId: {
+      type: String,
+      default: "",
+    },
+
+    banner: {
+      type: String,
+      default: "",
+    },
+
+    bannerPublicId: {
+      type: String,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 300,
+    },
+
+    followerCount: {
+      type: Number,
+      default: 0,
+    },
+
+    followingCount: {
+      type: Number,
+      default: 0,
     },
 
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,
-
-        ref: "user",
+        ref: "User",
       },
     ],
 
     following: [
       {
         type: mongoose.Schema.Types.ObjectId,
-
-        ref: "user",
+        ref: "User",
       },
     ],
 
-    bio: {
-  type: String,
-  default: "",
-},
+    socials: {
+      youtube: {
+        type: String,
+        default: "",
+      },
 
-banner: {
-  type: String,
-  default: "",
-},
+      twitch: {
+        type: String,
+        default: "",
+      },
 
-socials: {
+      twitter: {
+        type: String,
+        default: "",
+      },
 
-  youtube: {
-    type: String,
-    default: "",
-  },
+      instagram: {
+        type: String,
+        default: "",
+      },
+    },
 
-  twitch: {
-    type: String,
-    default: "",
-  },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
 
-  twitter: {
-    type: String,
-    default: "",
-  },
-
-  instagram: {
-    type: String,
-    default: "",
-  },
-
-},
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-const userModel = mongoose.model("user", userSchema);
+userSchema.index({
+  fullName: "text",
+});
 
-module.exports = userModel;
+userSchema.index({
+  createdAt: -1,
+});
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = User;

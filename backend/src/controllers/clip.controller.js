@@ -1,77 +1,20 @@
 const clipModel = require("../models/clip.model");
 
-const likeModel = require("../models/likes.model");
+const likeModel = require("../models/like.model");
 const saveModel = require("../models/save.model");
 const commentModel = require("../models/comment.model");
 
-const cloudinary = require("../services/storage.service");
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
 
-const streamifier = require("streamifier");
+const {
+  uploadClipVideo,
+  generateThumbnail,
+} = require("../services/storage.service");
 
-// CREATE CLIP
-async function createClip(req, res) {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        message: "Clip file is required",
-      });
-    }
+const eventbus = require("../events/eventBus");
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: "video",
-          folder: "gametok",
-        },
-
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        },
-      );
-
-      streamifier.createReadStream(req.file.buffer).pipe(stream);
-    });
-
-    const thumbnail = result.secure_url
-      .replace("/upload/", "/upload/so_1/")
-      .replace(".mp4", ".jpg");
-
-    const clip = await clipModel.create({
-      gameName: req.body.gameName,
-
-      thumbnail,
-
-      description: req.body.description,
-
-      genre: req.body.genre,
-
-      gameUrl: req.body.gameUrl,
-
-      video: uploadResult.secure_url,
-
-      creator: req.creator._id,
-
-      likeCount: 0,
-
-      savesCount: 0,
-
-      tags: JSON.parse(req.body.tags || "[]"),
-    });
-
-    res.status(201).json({
-      message: "Clip uploaded successfully",
-
-      clip,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
-}
+const { getPagination } = require("../utils/pagination");
 
 function calculateTrendingScore(clip) {
   const likes = clip.likeCount || 0;
@@ -91,411 +34,416 @@ function calculateTrendingScore(clip) {
   return engagementScore + recencyBoost;
 }
 
-// GET ALL CLIPS
-async function getClips(req, res) {
-  try {
-    const page = Number(req.query.page) || 1;
-
-    const limit = Number(req.query.limit) || 5;
-
-    const skip = (page - 1) * limit;
-
-    const clips = await clipModel
-
-      .find()
-
-      .populate(
-        "creator",
-
-        "name avatar isVerified",
-      )
-
-      .sort({
-        createdAt: -1,
-      })
-
-      .skip(skip)
-
-      .limit(limit);
-
-    const totalClips = await clipModel.countDocuments();
-
-    const rankedClips = clips.sort(
-      (a, b) => calculateTrendingScore(b) - calculateTrendingScore(a),
-    );
-
-    res.status(200).json({
-      clips: rankedClips,
-
-      currentPage: page,
-
-      hasMore: skip + clips.length < totalClips,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to fetch clips",
-    });
+async function createClip(req, res) {
+  if (!req.file) {
+    throw new ApiError(400, "Clip file is required");
   }
+
+  const uploadResult = await uploadClipVideo(req.file.buffer);
+
+  const thumbnail = generateThumbnail(uploadResult.secure_url);
+
+  const clip = await clipModel.create({
+    gameName: req.body.gameName,
+
+    thumbnail,
+
+    description: req.body.description,
+
+    genre: req.body.genre,
+
+    gameUrl: req.body.gameUrl,
+
+    video: uploadResult.secure_url,
+
+    creator: req.user._id,
+
+    videoPublicId: uploadResult.public_id,
+
+    tags: Array.isArray(req.body.tags)
+      ? req.body.tags
+      : JSON.parse(req.body.tags || "[]"),
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, "Clip uploaded successfully", {
+      clip,
+    }),
+  );
 }
 
-// LIKE / UNLIKE CLIP
+async function getClips(req, res) {
+  const { page, limit, skip } = getPagination(req.query);
+
+  const clips = await clipModel
+    .find({
+      isDeleted: {
+        $ne: true,
+      },
+    })
+
+    .select(
+      `
+        gameName
+        thumbnail
+        video
+        description
+        tags
+        creator
+        likeCount
+        commentCount
+        savesCount
+        views
+        createdAt
+        `,
+    )
+
+    .populate(
+      "creator",
+      `
+        fullName
+        avatar
+        isVerified
+        `,
+    )
+
+    .sort({
+      createdAt: -1,
+    })
+
+    .skip(skip)
+
+    .limit(limit)
+
+    .lean();
+
+  const totalClips = await clipModel.countDocuments({
+    isDeleted: {
+      $ne: true,
+    },
+  });
+
+  const rankedClips = clips.sort(
+    (a, b) => calculateTrendingScore(b) - calculateTrendingScore(a),
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, "Clips fetched successfully", {
+      clips: rankedClips,
+
+      pagination: {
+        page,
+
+        limit,
+
+        totalItems: totalClips,
+
+        totalPages: Math.ceil(totalClips / limit),
+
+        hasMore: skip + clips.length < totalClips,
+      },
+    }),
+  );
+}
+
 async function likeClip(req, res) {
-  try {
-    const { clipId } = req.body;
+  const { clipId } = req.body;
 
-    const user = req.user;
+  const existingLike = await likeModel.findOne({
+    user: req.user._id,
 
-    const alreadyLiked = await likeModel.findOne({
-      user: user._id,
-      clip: clipId,
-    });
+    clip: clipId,
+  });
 
-    if (alreadyLiked) {
-      await likeModel.deleteOne({
-        user: user._id,
-        clip: clipId,
-      });
+  const clip = await clipModel.findById(clipId);
 
-      await clipModel.findByIdAndUpdate(clipId, {
-        $inc: {
-          likeCount: -1,
-        },
-      });
+  if (!clip) {
+    throw new ApiError(404, "Clip not found");
+  }
 
-      return res.status(200).json({
-        message: "Clip unliked successfully",
-      });
-    }
-
-    const like = await likeModel.create({
-      user: user._id,
-
-      clip: clipId,
-    });
+  if (existingLike) {
+    await existingLike.deleteOne();
 
     await clipModel.findByIdAndUpdate(clipId, {
       $inc: {
-        likeCount: 1,
+        likeCount: -1,
       },
     });
 
-    io.to(clip.creator.toString()).emit(
-      "new_notification",
-
-      {
-        type: "like",
-
-        sender: req.user.name,
-      },
+    return res.status(200).json(
+      new ApiResponse(200, "Clip unliked successfully", {
+        liked: false,
+      }),
     );
-
-    await createNotification({
-      recipient: clip.creator,
-      sender: req.user._id,
-      type: "like",
-      clip: clip._id,
-    });
-
-    res.status(201).json({
-      message: "Clip liked successfully",
-
-      like,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Server error",
-    });
   }
+
+  await likeModel.create({
+    user: req.user._id,
+
+    clip: clipId,
+  });
+
+  await clipModel.findByIdAndUpdate(clipId, {
+    $inc: {
+      likeCount: 1,
+    },
+  });
+
+  eventBus.emit("notification:create", {
+    recipient: clip.creator,
+    sender: req.user._id,
+    type: "like",
+    clip: clip._id,
+    senderName: req.user.fullName,
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, "Clip liked successfully", {
+      liked: true,
+    }),
+  );
 }
 
 async function addComment(req, res) {
-  try {
-    const {
-      clipId,
+  const { clipId, text } = req.body;
 
-      text,
-    } = req.body;
+  const clip = await clipModel.findById(clipId);
 
-    const comment = await commentModel.create({
-      clip: clipId,
-
-      user: req.user._id,
-
-      text,
-    });
-
-    io.to(clip.creator.toString()).emit(
-      "new_notification",
-
-      {
-        type: "like",
-
-        sender: req.user.name,
-      },
-    );
-
-    await clipModel.findByIdAndUpdate(
-      clipId,
-
-      {
-        $inc: {
-          commentCount: 1,
-        },
-      },
-    );
-
-    await createNotification({
-      recipient: clip.creator,
-      sender: req.user._id,
-      type: "comment",
-      clip: clip._id,
-    });
-
-    res.status(201).json({
-      message: "Comment added",
-
-      comment,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to add comment",
-    });
+  if (!clip) {
+    throw new ApiError(404, "Clip not found");
   }
+
+  const comment = await commentModel.create({
+    clip: clipId,
+
+    user: req.user._id,
+
+    text,
+  });
+
+  await clipModel.findByIdAndUpdate(clipId, {
+    $inc: {
+      commentCount: 1,
+    },
+  });
+
+  eventBus.emit("notification:create", {
+    recipient: clip.creator,
+    sender: req.user._id,
+    type: "like",
+    clip: clip._id,
+    senderName: req.user.fullName,
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, "Comment added successfully", {
+      comment,
+    }),
+  );
 }
 
 async function deleteComment(req, res) {
-  try {
-    const { commentId } = req.params;
+  const { commentId } = req.params;
 
-    const comment = await commentModel.findById(commentId);
+  const comment = await commentModel.findById(commentId);
 
-    if (!comment) {
-      return res.status(404).json({
-        message: "Comment not found",
-      });
-    }
-
-    /* ONLY COMMENT OWNER */
-
-    if (comment.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Unauthorized",
-      });
-    }
-
-    await comment.deleteOne();
-
-    /* UPDATE COMMENT COUNT */
-
-    await clipModel.findByIdAndUpdate(
-      comment.clip,
-
-      {
-        $inc: {
-          commentCount: -1,
-        },
-      },
-    );
-
-    res.status(200).json({
-      message: "Comment deleted",
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to delete comment",
-    });
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
   }
+
+  if (comment.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Unauthorized");
+  }
+
+  comment.isDeleted = true;
+
+  await comment.save();
+
+  await clipModel.findByIdAndUpdate(comment.clip, {
+    $inc: {
+      commentCount: -1,
+    },
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Comment deleted successfully"));
 }
 
 async function getComments(req, res) {
-  try {
-    const comments = await commentModel
+  const { page, limit, skip } = getPagination(req.query);
 
-      .find({
-        clip: req.params.clipId,
-      })
+  const comments = await commentModel
+    .find({
+      clip: req.params.clipId,
 
-      .populate("user", "fullName avatar")
-
-      .sort({
-        createdAt: -1,
-      });
-
-    res.status(200).json({
-      comments,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to fetch comments",
-    });
-  }
-}
-
-// SAVE / UNSAVE CLIP
-async function saveClip(req, res) {
-  try {
-    const { clipId } = req.body;
-
-    const user = req.user;
-
-    const alreadySaved = await saveModel.findOne({
-      user: user._id,
-      clip: clipId,
-    });
-
-    if (alreadySaved) {
-      await saveModel.deleteOne({
-        user: user._id,
-        clip: clipId,
-      });
-
-      await clipModel.findByIdAndUpdate(
-        clipId,
-        {
-          $inc: {
-            savesCount: -1,
-          },
-        },
-        { new: true },
-      );
-
-      return res.status(200).json({
-        message: "Clip unsaved successfully",
-      });
-    }
-
-    const save = await saveModel.create({
-      user: user._id,
-
-      clip: clipId,
-    });
-
-    const updatedClip = await clipModel.findByIdAndUpdate(
-      clipId,
-      {
-        $inc: {
-          savesCount: 1,
-        },
+      isDeleted: {
+        $ne: true,
       },
-      { new: true },
-    );
+    })
 
-    console.log(updatedClip);
+    .populate(
+      "user",
+      `
+        fullName
+        avatar
+        `,
+    )
 
-    res.status(201).json({
-      message: "Clip saved successfully",
+    .sort({
+      createdAt: -1,
+    })
 
-      save,
-    });
-  } catch (err) {
-    console.log(err);
+    .skip(skip)
 
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
+    .limit(limit)
+
+    .lean();
+
+  const totalComments = await commentModel.countDocuments({
+    clip: req.params.clipId,
+
+    isDeleted: {
+      $ne: true,
+    },
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Comments fetched successfully", {
+      comments,
+
+      pagination: {
+        page,
+
+        limit,
+
+        totalItems: totalComments,
+
+        totalPages: Math.ceil(totalComments / limit),
+      },
+    }),
+  );
 }
 
-// GET SAVED CLIPS
-async function getSavedClips(req, res) {
-  try {
-    const savedClips = await saveModel
-      .find({
-        user: req.user._id,
-      })
+async function saveClip(req, res) {
+  const { clipId } = req.body;
 
-      .populate({
-        path: "clip",
+  const existingSave = await saveModel.findOne({
+    user: req.user._id,
 
-        populate: {
-          path: "creator",
+    clip: clipId,
+  });
 
-          select: "fullName avatar",
-        },
-      })
+  if (existingSave) {
+    await existingSave.deleteOne();
 
-      .sort({
-        createdAt: -1,
-      });
-
-    res.status(200).json({
-      message: "Saved clips fetched successfully",
-
-      savedClips,
+    await clipModel.findByIdAndUpdate(clipId, {
+      $inc: {
+        savesCount: -1,
+      },
     });
-  } catch (err) {
-    console.log(err);
 
-    res.status(500).json({
-      message: "Server error",
-    });
+    return res.status(200).json(
+      new ApiResponse(200, "Clip unsaved successfully", {
+        saved: false,
+      }),
+    );
   }
+
+  await saveModel.create({
+    user: req.user._id,
+
+    clip: clipId,
+  });
+
+  await clipModel.findByIdAndUpdate(clipId, {
+    $inc: {
+      savesCount: 1,
+    },
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, "Clip saved successfully", {
+      saved: true,
+    }),
+  );
+}
+
+async function getSavedClips(req, res) {
+  const { page, limit, skip } = getPagination(req.query);
+
+  const savedClips = await saveModel
+    .find({
+      user: req.user._id,
+    })
+
+    .populate({
+      path: "clip",
+
+      populate: {
+        path: "creator",
+
+        select: "fullName avatar",
+      },
+    })
+
+    .sort({
+      createdAt: -1,
+    })
+
+    .skip(skip)
+
+    .limit(limit)
+
+    .lean();
+
+  const totalSaved = await saveModel.countDocuments({
+    user: req.user._id,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Saved clips fetched successfully", {
+      savedClips,
+
+      pagination: {
+        page,
+
+        limit,
+
+        totalItems: totalSaved,
+
+        totalPages: Math.ceil(totalSaved / limit),
+      },
+    }),
+  );
 }
 
 async function trackView(req, res) {
-  try {
-    const { clipId } = req.body;
+  const { clipId } = req.body;
 
-    await clipModel.findByIdAndUpdate(
-      clipId,
+  await clipModel.findByIdAndUpdate(clipId, {
+    $inc: {
+      views: 1,
+    },
+  });
 
-      {
-        $inc: {
-          views: 1,
-        },
-      },
-    );
-
-    res.status(200).json({
-      success: true,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to track view",
-    });
-  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "View tracked successfully"));
 }
 
 async function trackWatchTime(req, res) {
-  try {
-    const {
-      clipId,
+  const { clipId, seconds } = req.body;
 
-      seconds,
-    } = req.body;
+  await clipModel.findByIdAndUpdate(clipId, {
+    $inc: {
+      watchTime: seconds,
+    },
+  });
 
-    await clipModel.findByIdAndUpdate(
-      clipId,
-
-      {
-        $inc: {
-          watchTime: seconds,
-        },
-      },
-    );
-
-    res.status(200).json({
-      success: true,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to track watch time",
-    });
-  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Watch time tracked successfully"));
 }
 
 module.exports = {

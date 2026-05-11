@@ -1,102 +1,59 @@
-const mongoose =
-  require("mongoose")
+const mongoose = require("mongoose");
 
+const notificationSchema = new mongoose.Schema(
+  {
+    recipient: {
+      type: mongoose.Schema.Types.ObjectId,
 
+      ref: "User",
 
-const notificationSchema =
+      required: true,
 
-  new mongoose.Schema(
-
-    {
-
-      recipient: {
-
-        type:
-          mongoose.Schema.Types.ObjectId,
-
-        ref: "user",
-
-        required: true,
-
-      },
-
-
-
-      sender: {
-
-        type:
-          mongoose.Schema.Types.ObjectId,
-
-        ref: "user",
-
-        required: true,
-
-      },
-
-
-
-      type: {
-
-        type: String,
-
-        enum: [
-
-          "like",
-
-          "comment",
-
-          "follow",
-
-        ],
-
-        required: true,
-
-      },
-
-
-
-      clip: {
-
-        type:
-          mongoose.Schema.Types.ObjectId,
-
-        ref: "clip",
-
-      },
-
-
-
-      isRead: {
-
-        type: Boolean,
-
-        default: false,
-
-      },
-
+      index: true,
     },
 
-    {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
 
-      timestamps: true,
+      ref: "User",
 
-    }
+      required: true,
+    },
 
-  )
+    type: {
+      type: String,
 
+      enum: ["like", "comment", "follow"],
 
+      required: true,
+    },
 
-const notificationModel =
+    clip: {
+      type: mongoose.Schema.Types.ObjectId,
 
-  mongoose.model(
+      ref: "Clip",
+    },
 
-    "notification",
+    isRead: {
+      type: Boolean,
 
-    notificationSchema
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
-  )
+notificationSchema.index({
+  recipient: 1,
+  createdAt: -1,
+});
 
+notificationSchema.index({
+  sender: 1,
+});
 
+const Notification = mongoose.model("Notification", notificationSchema);
 
-module.exports =
-  notificationModel
+module.exports = Notification;

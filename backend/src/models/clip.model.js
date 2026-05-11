@@ -5,6 +5,8 @@ const clipSchema = new mongoose.Schema(
     gameName: {
       type: String,
       required: true,
+      trim: true,
+      maxlength: 100,
     },
 
     video: {
@@ -14,18 +16,25 @@ const clipSchema = new mongoose.Schema(
 
     thumbnail: {
       type: String,
+      required: true,
     },
 
     description: {
       type: String,
+      trim: true,
+      maxlength: 300,
+      default: "",
     },
 
     genre: {
       type: String,
+      trim: true,
+      default: "",
     },
 
     gameUrl: {
       type: String,
+      default: "",
     },
 
     gameAppId: {
@@ -34,8 +43,9 @@ const clipSchema = new mongoose.Schema(
 
     creator: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
+      index: true,
     },
 
     likeCount: {
@@ -53,21 +63,29 @@ const clipSchema = new mongoose.Schema(
       default: 0,
     },
 
-    tags: {
-      type: [String],
-      default: [],
-    },
-    
     views: {
       type: Number,
-
       default: 0,
     },
 
     watchTime: {
       type: Number,
-
       default: 0,
+    },
+
+    trendingScore: {
+      type: Number,
+      default: 0,
+    },
+
+    tags: {
+      type: [String],
+      default: [],
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -77,6 +95,18 @@ const clipSchema = new mongoose.Schema(
 
 clipSchema.index({ gameName: "text" });
 
-const clipModel = mongoose.model("clip", clipSchema);
+clipSchema.index({ createdAt: -1 });
 
-module.exports = clipModel;
+clipSchema.index({ tags: 1 });
+
+clipSchema.index({ likeCount: -1 });
+
+clipSchema.index({ views: -1 });
+
+clipSchema.index({ createdAt: -1, likeCount: -1 });
+
+clipSchema.index({ creator: 1 });
+
+const Clip = mongoose.model("Clip", clipSchema);
+
+module.exports = Clip;

@@ -15,6 +15,7 @@ const {
 } = require(
   "../middlewares/auth.middleware"
 );
+const asyncHandler = require("../utils/asyncHandler");
 
 
 
@@ -26,14 +27,14 @@ router.get(
 
 router.put(
   "/:clipId",
-  authCreatorMiddleware,
-  updateClip
+  asyncHandler(authCreatorMiddleware,
+  updateClip)
 );
 
 router.delete(
   "/:clipId",
-  authCreatorMiddleware,
-  deleteClip
+  asyncHandler(authCreatorMiddleware,
+  deleteClip)
 );
 
 

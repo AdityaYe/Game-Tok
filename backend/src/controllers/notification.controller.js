@@ -1,73 +1,64 @@
-const notificationModel =
-  require(
-    "../models/notification.model"
-  )
+const notificationModel = require("../models/notification.model");
 
-async function getNotifications(
-  req,
-  res
-) {
+const ApiResponse = require("../utils/ApiResponse");
 
-  try {
+const { getPagination } = require("../utils/pagination");
 
-    const notifications =
+async function getNotifications(req, res) {
+  const { page, limit, skip } = getPagination(req.query);
 
-      await notificationModel
+  const notifications = await notificationModel
+    .find({
+      recipient: req.user._id,
+    })
 
-        .find({
+    .populate(
+      "sender",
+      `
+        fullName
+        avatar
+        `,
+    )
 
-          recipient:
-            req.user._id,
+    .populate(
+      "clip",
+      `
+        thumbnail
+        gameName
+        `,
+    )
 
-        })
+    .sort({
+      createdAt: -1,
+    })
 
-        .populate(
+    .skip(skip)
 
-          "sender",
+    .limit(limit)
 
-          "name avatar"
+    .lean();
 
-        )
+  const totalNotifications = await notificationModel.countDocuments({
+    recipient: req.user._id,
+  });
 
-        .populate(
-
-          "clip",
-
-          "thumbnail gameName"
-
-        )
-
-        .sort({
-          createdAt: -1,
-        })
-
-        const io = req.app.get("io")
-
-    res.status(200).json({
-
+  return res.status(200).json(
+    new ApiResponse(200, "Notifications fetched successfully", {
       notifications,
 
-    })
+      pagination: {
+        page,
 
-  } catch (err) {
+        limit,
 
-    console.log(err)
+        totalItems: totalNotifications,
 
-    res.status(500).json({
-
-      message:
-        "Failed to fetch notifications",
-
-    })
-
-  }
-
+        totalPages: Math.ceil(totalNotifications / limit),
+      },
+    }),
+  );
 }
-
-
 
 module.exports = {
-
   getNotifications,
-
-}
+};

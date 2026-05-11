@@ -4,21 +4,39 @@ const likeSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
 
     clip: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "clip",
+      ref: "Clip",
       required: true,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const likeModel = mongoose.model("like", likeSchema);
+likeSchema.index(
+  {
+    user: 1,
+    clip: 1,
+  },
+  {
+    unique: true,
+  },
+);
 
-module.exports = likeModel;
+likeSchema.index({
+  clip: 1,
+});
+
+likeSchema.index({
+  user: 1,
+});
+
+const Like = mongoose.model("Like", likeSchema);
+
+module.exports = Like;

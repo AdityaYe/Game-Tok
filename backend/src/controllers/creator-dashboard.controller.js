@@ -1,160 +1,182 @@
 const clipModel = require("../models/clip.model");
 
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
+
+const { getCreatorStats } = require("../services/dashboard.service");
+
+const { getPagination } = require("../utils/pagination");
+
 async function getCreatorDashboard(req, res) {
-  try {
-    const creatorId = req.creator._id;
+  const creatorId = req.user._id;
 
-    const clips = await clipModel.find({
+  const { page, limit, skip } = getPagination(req.query);
+
+  const clips = await clipModel
+    .find({
       creator: creatorId,
-    });
 
-    const totalLikes = clips.reduce(
-      (sum, clip) => sum + (clip.likeCount || 0),
+      isDeleted: {
+        $ne: true,
+      },
+    })
 
-      0,
-    );
+    .select(
+      `
+        gameName
+        thumbnail
+        video
+        description
+        tags
+        likeCount
+        commentCount
+        savesCount
+        views
+        watchTime
+        createdAt
+        `,
+    )
 
-    const totalSaves = clips.reduce(
-      (sum, clip) => sum + (clip.savesCount || 0),
+    .sort({
+      createdAt: -1,
+    })
 
-      0,
-    );
+    .skip(skip)
 
-    const totalViews = clips.reduce(
-      (sum, clip) => sum + (clip.views || 0),
+    .limit(limit)
 
-      0,
-    );
+    .lean();
 
-    const totalWatchTime = clips.reduce(
-      (sum, clip) => sum + (clip.watchTime || 0),
+  const totalClipCount = await clipModel.countDocuments({
+    creator: creatorId,
 
-      0,
-    );
+    isDeleted: {
+      $ne: true,
+    },
+  });
 
-    const engagementRate =
-      totalViews > 0 ? ((totalLikes + totalSaves) / totalViews) * 100 : 0;
+  const stats = await getCreatorStats(creatorId);
 
-    res.status(200).json({
+  const engagementRate =
+    stats.totalViews > 0
+      ? ((stats.totalLikes + stats.totalSaves) / stats.totalViews) * 100
+      : 0;
+
+  return res.status(200).json(
+    new ApiResponse(200, "Dashboard fetched successfully", {
       creator: {
-        _id: req.creator._id,
+        _id: req.user._id,
 
-        name: req.creator.name,
+        fullName: req.user.fullName,
 
-        avatar: req.creator.avatar,
+        avatar: req.user.avatar,
 
-        bio: req.creator.bio,
+        bio: req.user.bio,
 
-        banner: req.creator.banner,
+        banner: req.user.banner,
 
-        socials: req.creator.socials,
+        socials: req.user.socials,
 
-        isVerified: req.creator.isVerified,
+        isVerified: req.user.isVerified,
       },
 
       clips,
 
       stats: {
-        totalClips: clips.length,
+        totalClips: stats.totalClips,
 
-        followerCount: req.creator.followers?.length || 0,
+        followerCount: req.user.followerCount,
 
-        followingCount: req.creator.following?.length || 0,
+        followingCount: req.user.followingCount,
 
-        totalLikes,
+        totalLikes: stats.totalLikes,
 
-        totalSaves,
+        totalSaves: stats.totalSaves,
 
-        totalViews,
+        totalViews: stats.totalViews,
 
-        totalWatchTime,
+        totalWatchTime: stats.totalWatchTime,
 
-        engagementRate,
+        engagementRate: Number(engagementRate.toFixed(2)),
       },
-    });
-  } catch (err) {
-    console.log(err);
 
-    res.status(500).json({
-      message: "Failed to fetch dashboard",
-    });
-  }
+      pagination: {
+        page,
+
+        limit,
+
+        totalItems: totalClipCount,
+
+        totalPages: Math.ceil(totalClipCount / limit),
+      },
+    }),
+  );
 }
 
 async function updateClip(req, res) {
-  try {
-    const { clipId } = req.params;
+  const { clipId } = req.params;
 
-    const {
-      gameName,
+  const { gameName, description, tags } = req.body;
 
-      description,
+  const clip = await clipModel.findOne({
+    _id: clipId,
 
-      tags,
-    } = req.body;
+    creator: req.user._id,
 
-    const clip = await clipModel.findOne({
-      _id: clipId,
+    isDeleted: {
+      $ne: true,
+    },
+  });
 
-      creator: req.creator._id,
-    });
-
-    if (!clip) {
-      return res.status(404).json({
-        message: "Clip not found",
-      });
-    }
-
-    clip.gameName = gameName || clip.gameName;
-
-    clip.description = description || clip.description;
-
-    clip.tags = tags || [];
-
-    await clip.save();
-
-    res.status(200).json({
-      message: "Clip updated successfully",
-
-      clip,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to update clip",
-    });
+  if (!clip) {
+    throw new ApiError(404, "Clip not found");
   }
+
+  if (gameName) {
+    clip.gameName = gameName;
+  }
+
+  if (description) {
+    clip.description = description;
+  }
+
+  if (tags) {
+    clip.tags = tags;
+  }
+
+  await clip.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, "Clip updated successfully", {
+      clip,
+    }),
+  );
 }
 
 async function deleteClip(req, res) {
-  try {
-    const { clipId } = req.params;
+  const { clipId } = req.params;
 
-    const clip = await clipModel.findOne({
-      _id: clipId,
+  const clip = await clipModel.findOne({
+    _id: clipId,
 
-      creator: req.creator._id,
-    });
+    creator: req.user._id,
 
-    if (!clip) {
-      return res.status(404).json({
-        message: "Clip not found",
-      });
-    }
+    isDeleted: {
+      $ne: true,
+    },
+  });
 
-    await clip.deleteOne();
-
-    res.status(200).json({
-      message: "Clip deleted successfully",
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to delete clip",
-    });
+  if (!clip) {
+    throw new ApiError(404, "Clip not found");
   }
+
+  clip.isDeleted = true;
+
+  await clip.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Clip deleted successfully"));
 }
 
 module.exports = {
