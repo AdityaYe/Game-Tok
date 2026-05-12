@@ -19,7 +19,7 @@ const Profile = () => {
   useEffect(() => {
 
     axios.get(
-      `http://localhost:3000/api/creator/${id}`,
+      `http://localhost:3000/api/v1/creator/${id}`,
       {
         withCredentials: true
       }

@@ -1,18 +1,16 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const morgan = require("morgan");
 const compression = require("compression");
+const pinoHttp = require("pino-http");
+const logger = require("./config/logger");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
 
 const { errorHandler } = require("./middlewares/error.middleware");
-const {
-  authLimiter,
-  apiLimiter,
-} = require("./middlewares/ratelimit.middleware");
+const { authLimiter,apiLimiter } = require("./middlewares/ratelimit.middleware");
+const requestIdMiddleware = require("./middlewares/requestId.middleware");
 
 const authRoutes = require("./routes/auth.routes");
 const clipRoutes = require("./routes/clip.routes");
@@ -28,7 +26,6 @@ const app = express();
 const API_PREFIX = "/api/v1";
 
 const allowedOrigins = [env.CLIENT_URL];
-const isDev = env.nodeEnv === "development";
 
 app.use(
   cors({
@@ -47,18 +44,20 @@ app.use(
     crossOriginResourcePolicy: false,
   }),
 );
-if (isDev) {
-  app.use(morgan("dev"));
-}
+app.use(
+  pinoHttp({
+    logger,
+  }),
+);
 app.use(
   compression({
     threshold: 1024,
   }),
 );
+app.use(requestIdMiddleware);
 app.use(cookieParser());
 app.use(express.json());
-app.use(mongoSanitize());
-add.use(hpp());
+app.use(hpp());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   `${API_PREFIX}/auth`,
@@ -83,6 +82,6 @@ app.use(`${API_PREFIX}/search`, searchRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 
 app.use(errorHandler);
-app.disable("x-powered-by")
+app.disable("x-powered-by");
 
 module.exports = app;

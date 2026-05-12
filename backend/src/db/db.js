@@ -1,21 +1,17 @@
 const mongoose = require("mongoose");
 
-mongoose.set("strictQuery", true);
+const logger = require("../config/logger");
 
 async function connectDB() {
-
   try {
-
     await mongoose.connect(process.env.MONGODB_URI);
 
-    console.log("MongoDB connected");
-
+    logger.info("MongoDB connected");
   } catch (err) {
+    logger.error("MongoDB connection failed", err);
 
-    console.log("MongoDB connection error:", err);
-
+    throw err;
   }
-
 }
 
 module.exports = connectDB;

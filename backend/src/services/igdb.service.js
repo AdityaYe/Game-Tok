@@ -68,7 +68,7 @@ async function searchGames(query) {
   const memoryCache = cache.get(cacheKey);
 
   if (memoryCache) {
-    console.log("NODE CACHE HIT");
+    logger.info("NODE CACHE HIT");
 
     return memoryCache;
   }
@@ -88,7 +88,7 @@ async function searchGames(query) {
     .lean();
 
   if (existingGames.length > 0) {
-    console.log("MONGO CACHE HIT");
+    logger.info("MONGO CACHE HIT");
 
     cache.set(cacheKey, existingGames);
 
@@ -99,7 +99,7 @@ async function searchGames(query) {
      IGDB API FALLBACK
   ========================= */
 
-  console.log("IGDB API CALL");
+  logger.info("IGDB API CALL");
 
   const token = await getAccessToken();
 
@@ -149,7 +149,7 @@ async function searchGames(query) {
         }
       );
     } catch (err) {
-      console.error(
+      logger.error(
         "Failed to cache games:",
         err.message
       );

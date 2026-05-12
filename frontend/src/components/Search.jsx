@@ -1,41 +1,17 @@
 import React, { useState } from "react";
-
-import axios from "axios";
-
 import { Link } from "react-router-dom";
+import { useDebounce } from "../features/clips/hooks/useDebounce";
+import { useSearch } from "../features/search/hooks/useSearch";
 
 import "../styles/search.css";
 
 const Search = () => {
   const [query, setQuery] = useState("");
-
-  const [results, setResults] = useState(null);
-
-  const [loading, setLoading] = useState(false);
-
-  async function handleSearch(value) {
-    setQuery(value);
-
-    if (!value.trim()) {
-      setResults(null);
-
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await axios.get(
-        `http://localhost:3000/api/search?q=${value}`,
-      );
-
-      setResults(response.data);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const debouncedQuery = useDebounce(query, 500);
+  const {
+    data: results,
+    isLoading: loading,
+  } = useSearch(debouncedQuery);
 
   return (
     <div className="search-page">
@@ -49,7 +25,7 @@ const Search = () => {
         <input
           type="text"
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search creators, games, tags"
           className="search-input"
         />

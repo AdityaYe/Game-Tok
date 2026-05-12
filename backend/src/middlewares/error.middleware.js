@@ -1,17 +1,20 @@
+const logger = require("../config/logger");
+
 function errorHandler(err, req, res, next) {
-  console.error(err);
+  logger.error({
+    message: err.message,
 
-  const statusCode = err.statusCode || 500;
+    stack: err.stack,
 
-  res.status(statusCode).json({
+    url: req.originalUrl,
+
+    method: req.method,
+  });
+
+  return res.status(err.status || 500).json({
     success: false,
 
-    message:
-      err.message || "Internal Server Error",
-
-    ...(process.env.NODE_ENV !== "production" && {
-      stack: err.stack,
-    }),
+    message: err.message || "Server Error",
   });
 }
 

@@ -40,6 +40,5 @@ function requireCreator(req, res, next) {
 
 module.exports = {
   authMiddleware,
-
   requireCreator,
 };

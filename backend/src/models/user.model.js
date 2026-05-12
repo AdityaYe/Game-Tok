@@ -15,7 +15,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
 
     password: {
@@ -27,7 +26,6 @@ const userSchema = new mongoose.Schema(
     isCreator: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
     avatar: {

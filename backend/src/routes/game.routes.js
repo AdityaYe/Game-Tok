@@ -2,35 +2,32 @@ const express = require("express");
 
 const router = express.Router();
 
-const {
-  searchGames,
-} = require("../services/igdb.service");
+const { searchGames } = require("../services/igdb.service");
 
+const asyncHandler = require("../utils/asyncHandler");
 
+const ApiResponse = require("../utils/ApiResponse");
 
-router.get("/search", async (req, res) => {
+const ApiError = require("../utils/ApiError");
 
-  try {
+router.get(
+  "/search",
 
-    const query = req.query.q;
+  asyncHandler(async (req, res) => {
+    const query = req.query.q?.trim();
 
-    const games =
-      await searchGames(query);
+    if (!query) {
+      throw new ApiError(400, "Search query is required");
+    }
 
-    res.json(games);
+    const games = await searchGames(query);
 
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json({
-      message: "Failed to search games",
-    });
-
-  }
-
-});
-
-
+    return res.status(200).json(
+      new ApiResponse(200, "Games fetched successfully", {
+        games,
+      }),
+    );
+  }),
+);
 
 module.exports = router;

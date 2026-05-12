@@ -9,7 +9,6 @@ const notificationSchema = new mongoose.Schema(
 
       required: true,
 
-      index: true,
     },
 
     sender: {

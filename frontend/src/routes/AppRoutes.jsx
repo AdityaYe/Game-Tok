@@ -1,120 +1,98 @@
-import React from 'react'
+import React from "react";
 
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes
-} from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
+import ProtectedRoute from "./ProtectedRoute";
+import CreatorRoute from "./CreateRoute";
 
-import UserRegister from '../pages/auth/UserRegister'
-import UserLogin from '../pages/auth/UserLogin'
+const UserRegister = lazy(() => import("../pages/auth/UserRegister"));
+const UserLogin = lazy(() => import("../pages/auth/UserLogin"));
 
-import CreatorRegister from '../pages/auth/CreatorRegister'
-import CreatorLogin from '../pages/auth/CreatorLogin'
+const CreatorRegister = lazy(() => import("../pages/auth/CreatorRegister"));
+const CreatorLogin = lazy(() => import("../pages/auth/CreatorLogin"));
 
-import ChooseRegister from '../pages/auth/ChooseRegister'
-import CreatorDashboard from '../pages/creator/CreatorDashboard'
+const ChooseRegister = lazy(() => import("../pages/auth/ChooseRegister"));
+const CreatorDashboard = lazy(
+  () => import("../pages/creator/CreatorDashboard"),
+);
 
-import Home from '../pages/general/Home'
-import Saved from '../pages/general/Saved'
+const Home = lazy(() => import("../pages/general/Home"));
+const Saved = lazy(() => import("../pages/general/Saved"));
 
-import UploadClip from '../pages/creator/UploadClip'
-import Profile from '../pages/creator/Profile'
+const UploadClip = lazy(() => import("../pages/creator/UploadClip"));
+const Profile = lazy(() => import("../pages/creator/Profile"));
 
-import BottomNav from '../components/BottomNav'
-
+import BottomNav from "../components/BottomNav";
+import { Suspense } from "react";
 
 const LayoutWithNav = ({ children }) => {
-
   return (
     <>
       {children}
       <BottomNav />
     </>
-  )
-
-}
-
+  );
+};
 
 const AppRoutes = () => {
-
   return (
-
     <Router>
+      <Suspense
+        fallback={
+          <>
+            <FeedSkeleton />
+            <FeedSkeleton />
+          </>
+        }>
+        <Routes>
+          {/* AUTH */}
+          <Route path="/register" element={<ChooseRegister />} />
+          <Route path="/user/register" element={<UserRegister />} />
+          <Route path="/user/login" element={
+             <GuestRoute>
+              <UserLogin />
+            </GuestRoute>
+            } />
+          <Route path="/creator/register" element={<CreatorRegister />} />
+          <Route path="/creator/login" element={<CreatorLogin />} />
+          {/* GENERAL */}
+          <Route
+            path="/"
+            element={
+              <LayoutWithNav>
+                <Home />
+              </LayoutWithNav>
+            }
+          />
 
-      <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/saved"
+              element={
+                <ProtectedRoute>
+                <LayoutWithNav>
+                  <Saved />
+                </LayoutWithNav>
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
-        {/* AUTH */}
-        <Route
-          path="/register"
-          element={<ChooseRegister />}
-        />
+          {/* CREATOR */}
+          <Route path="/creator/:id" element={<Profile />} />
 
-        <Route
-          path="/user/register"
-          element={<UserRegister />}
-        />
-
-        <Route
-          path="/user/login"
-          element={<UserLogin />}
-        />
-
-        <Route
-          path="/creator/register"
-          element={<CreatorRegister />}
-        />
-
-        <Route
-          path="/creator/login"
-          element={<CreatorLogin />}
-        />
-
-
-
-        {/* GENERAL */}
-        <Route
-          path="/"
-          element={
-            <LayoutWithNav>
-              <Home />
-            </LayoutWithNav>
-          }
-        />
-
-        <Route
-          path="/saved"
-          element={
-            <LayoutWithNav>
-              <Saved />
-            </LayoutWithNav>
-          }
-        />
-
-
-
-        {/* CREATOR */}
-        <Route
-          path="/upload-clip"
-          element={<UploadClip />}
-        />
-
-        <Route
-          path="/creator/:id"
-          element={<Profile />}
-        />
-
-        <Route
-        path="/creator/dashboard"
-        element={<CreatorDashboard />}
-        />
-
-      </Routes>
-
+          <Route element={<CreatorRoute />}>
+            <Route path="/upload-clip" element={
+              <CreatorRoute>
+                <UploadClip />
+              </CreatorRoute>
+              } />
+            <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </Router>
+  );
+};
 
-  )
-}
-
-export default AppRoutes
+export default AppRoutes;

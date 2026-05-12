@@ -1,38 +1,10 @@
-const express =
-  require("express")
+const express = require("express");
 
+const router = express.Router();
+const {getNotifications} = require("../controllers/notification.controller");
+const {authMiddleware,} = require("../middlewares/auth.middleware");
+const asyncHandler = require("../utils/asyncHandler");
 
+router.get("/",authMiddleware, asyncHandler(getNotifications));
 
-const router =
-  express.Router()
-
-
-
-const authMiddleware =
-  require(
-    "../middlewares/auth.middleware"
-  )
-
-
-
-const notificationController =
-  require(
-    "../controllers/notification.controller"
-  )
-
-
-
-router.get(
-
-  "/",
-
-  authMiddleware.authUserMiddleware,
-
-  notificationController.getNotifications
-
-)
-
-
-
-module.exports =
-  router
+module.exports = router;

@@ -19,7 +19,7 @@ function registerNotificationEvents(io) {
           sender: senderName,
         });
       } catch (err) {
-        console.error("Notification event error:", err);
+        logger.error("Notification event error:", err);
       }
     },
   );

@@ -36,7 +36,7 @@ const CreatorDashboard = () => {
   async function fetchDashboard() {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/creator/dashboard",
+        "http://localhost:3000/api/v1/creator/dashboard",
 
         {
           withCredentials: true,
@@ -66,7 +66,7 @@ const CreatorDashboard = () => {
       formData.append("avatar", avatar);
 
       const response = await axios.put(
-        "http://localhost:3000/api/creator/avatar",
+        "http://localhost:3000/api/v1/creator/avatar",
 
         formData,
 
@@ -97,7 +97,7 @@ const CreatorDashboard = () => {
         .filter(Boolean);
 
       await axios.put(
-        `http://localhost:3000/api/creator/dashboard/${clip._id}`,
+        `http://localhost:3000/api/v1/creator/dashboard/${clip._id}`,
 
         {
           gameName: editGameName,
@@ -137,7 +137,7 @@ const CreatorDashboard = () => {
   async function handleDelete(id) {
     try {
       await axios.delete(
-        `http://localhost:3000/api/creator/dashboard/${id}`,
+        `http://localhost:3000/api/v1/creator/dashboard/${id}`,
 
         {
           withCredentials: true,

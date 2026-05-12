@@ -1,13 +1,24 @@
 require("dotenv").config();
 
 const http = require("http");
-const app = require("./src/app");
-const connectDB = require("./src/db/db");
+
 const { Server } = require("socket.io");
-const { registerNotificationEvents } = require("./src/events/notification.events");
+
+const app = require("./src/app");
+
+const connectDB = require("./src/db/db");
+
+const {
+  registerNotificationEvents,
+} = require(
+  "./src/events/notifcation.events"
+);
+
 const env = require("./src/config/env");
 
-connectDB();
+const logger = require(
+  "./src/config/logger"
+);
 
 const server =
   http.createServer(app);
@@ -22,15 +33,16 @@ const io = new Server(server, {
 
 io.on(
   "connection",
+
   (socket) => {
 
-    console.log(
-      "User connected:",
-      socket.id
+    logger.info(
+      `User connected: ${socket.id}`
     );
 
     socket.on(
       "join",
+
       (userId) => {
         socket.join(userId);
       }
@@ -38,27 +50,63 @@ io.on(
 
     socket.on(
       "disconnect",
+
       () => {
-        console.log(
-          "Disconnected:",
-          socket.id
+
+        logger.info(
+          `Disconnected: ${socket.id}`
         );
       }
     );
   }
 );
 
+app.set("io", io);
+
+registerNotificationEvents(io);
+
+async function startServer() {
+
+  try {
+
+    await connectDB();
+
+    server.listen(
+      env.port,
+
+      () => {
+
+        logger.info(
+          `Server running on port ${env.port}`
+        );
+      }
+    );
+
+  } catch (err) {
+
+    logger.error(
+      "Failed to start server",
+      err
+    );
+
+    process.exit(1);
+  }
+}
+
+startServer();
+
 process.on(
   "SIGTERM",
+
   () => {
 
-    console.log(
+    logger.info(
       "SIGTERM received"
     );
 
     server.close(() => {
 
-      console.log(
+      logger.info(
         "Server closed"
       );
 
@@ -67,15 +115,30 @@ process.on(
   }
 );
 
-app.set("io", io);
+process.on(
+  "uncaughtException",
 
-registerNotificationEvents(io);
+  (err) => {
 
-server.listen(
-  env.port,
-  () => {
-    console.log(
-      `Server running on port ${env.port}`
+    logger.error(
+      "Uncaught Exception",
+      err
     );
+
+    process.exit(1);
+  }
+);
+
+process.on(
+  "unhandledRejection",
+
+  (err) => {
+
+    logger.error(
+      "Unhandled Rejection",
+      err
+    );
+
+    process.exit(1);
   }
 );

@@ -29,7 +29,7 @@ const CreatorRegister = () => {
 
 
       await axios.post(
-        "http://localhost:3000/api/auth/creator/register",
+        "http://localhost:3000/api/v1/auth/creator/register",
         {
           name: creatorName,
           contactName,

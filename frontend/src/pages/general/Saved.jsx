@@ -4,7 +4,7 @@ import axios from 'axios'
 
 import '../../styles/clips.css'
 
-import ClipFeed from '../../components/ClipFeed'
+import ClipFeed from '../../components/feed/ClipFeed'
 
 
 const Saved = () => {
@@ -16,7 +16,7 @@ const Saved = () => {
   useEffect(() => {
 
     axios.get(
-      "http://localhost:3000/api/clips/save",
+      "http://localhost:3000/api/v1/clips/save",
       {
         withCredentials: true
       }
@@ -66,7 +66,7 @@ const Saved = () => {
     try {
 
       await axios.post(
-        "http://localhost:3000/api/clips/save",
+        "http://localhost:3000/api/v1/clips/save",
         {
           clipId: item._id
         },

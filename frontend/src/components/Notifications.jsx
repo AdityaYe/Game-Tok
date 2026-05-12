@@ -30,7 +30,7 @@ const Notifications = () => {
   async function fetchNotifications() {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/notifications",
+        "http://localhost:3000/api/v1/notifications",
 
         {
           withCredentials: true,

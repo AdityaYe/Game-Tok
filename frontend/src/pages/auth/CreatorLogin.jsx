@@ -25,7 +25,7 @@ const CreatorLogin = () => {
 
 
       await axios.post(
-        "http://localhost:3000/api/auth/creator/login",
+        "http://localhost:3000/api/v1/auth/creator/login",
         {
           email,
           password
