@@ -10,6 +10,7 @@ const { createClipSchema, commentSchema } = require("../validators/clip.validato
 const router = express.Router();
 
 router.get("/saved", authMiddleware, asyncHandler(clipController.getSavedClips));
+router.get("/search", asyncHandler(clipController.searchClips));
 router.get("/:clipId/comments", asyncHandler(clipController.getComments));
 router.get("/", asyncHandler(clipController.getClips),);
 router.post("/", authMiddleware, upload.single("clip"), validate(createClipSchema), asyncHandler(clipController.createClip),);

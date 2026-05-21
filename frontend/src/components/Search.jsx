@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import ClipFeed from "./feed/ClipFeed";
 import { useDebounce } from "../features/clips/hooks/useDebounce";
 import { useSearch } from "../features/search/hooks/useSearch";
 import { optimizeImage } from "../utils/cloudinary";
 
 import "../styles/search.css";
+import "../styles/clips.css";
 
 const Search = () => {
   const [query, setQuery] = useState("");
@@ -69,30 +71,19 @@ const Search = () => {
             )}
           </div>
 
-          {/* GAMES */}
-
           <div className="search-section">
-            <h2 className="search-section-title">Games</h2>
+            <h2 className="search-section-title">Clips</h2>
 
             {results.clips?.length > 0 ? (
-              <div className="search-games-list">
-                {results.clips.map((clip) => (
-                  <div key={clip._id} className="search-game-card">
-                    {clip.thumbnail && (
-                      <img
-                        src={optimizeImage(clip.thumbnail, 800)}
-                        loading="lazy"
-                        alt={clip.gameName}
-                        className="search-game-thumbnail"
-                      />
-                    )}
-
-                    <span className="search-game-name">{clip.gameName}</span>
-                  </div>
-                ))}
+              <div className="search-feed-shell">
+                <ClipFeed
+                  items={results.clips}
+                  hasMore={false}
+                  loadMore={() => Promise.resolve()}
+                />
               </div>
             ) : (
-              <p className="search-empty">No games found.</p>
+              <p className="search-empty">No clips found.</p>
             )}
           </div>
 

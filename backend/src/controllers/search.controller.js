@@ -8,6 +8,32 @@ const ApiResponse = require("../utils/ApiResponse");
 
 const { getTrendingTags } = require("../services/search.service");
 
+function buildClipSearchFilter(query) {
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const queryRegex = new RegExp(escapedQuery, "i");
+
+  return {
+    isDeleted: {
+      $ne: true,
+    },
+    $or: [
+      {
+        gameName: queryRegex,
+      },
+      {
+        tags: queryRegex,
+      },
+    ],
+  };
+}
+
+function withCaption(clip) {
+  return {
+    ...clip,
+    caption: clip.caption ?? clip.description ?? "",
+  };
+}
+
 async function searchAll(req, res) {
   const query = req.query.q?.trim() || "";
 
@@ -73,22 +99,36 @@ async function searchAll(req, res) {
 
   const clips = await clipModel
 
-    .find({
-      $text: {
-        $search: query,
-      },
-
-      isDeleted: {
-        $ne: true,
-      },
-    })
+    .find(buildClipSearchFilter(query))
 
     .select(
       `
         gameName
         thumbnail
+        video
+        description
+        tags
+        creator
+        likeCount
+        commentCount
+        savesCount
+        views
+        createdAt
       `,
     )
+
+    .populate(
+      "creator",
+      `
+        fullName
+        avatar
+        isVerified
+      `,
+    )
+
+    .sort({
+      createdAt: -1,
+    })
 
     .limit(5)
 
@@ -117,7 +157,7 @@ async function searchAll(req, res) {
 
   const responseData = {
     creators,
-    clips,
+    clips: clips.map(withCaption),
     tags,
   };
 

@@ -22,6 +22,7 @@ const gameRoutes = require("./routes/game.routes");
 const creatorDashboardRoutes = require("./routes/creator-dashboard.routes");
 const searchRoutes = require("./routes/search.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const userRoutes = require("./routes/user.routes");
 const env = require("./config/env");
 
 const app = express();
@@ -77,6 +78,7 @@ app.use(`${API_PREFIX}/clips`, clipRoutes);
 app.use(`${API_PREFIX}/dashboard`, creatorDashboardRoutes);
 app.use(`${API_PREFIX}/creator/dashboard`, creatorDashboardRoutes);
 app.use(`${API_PREFIX}/creator`, creatorRoutes);
+app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/games`, gameRoutes);
 app.use(`${API_PREFIX}/search`, searchRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);

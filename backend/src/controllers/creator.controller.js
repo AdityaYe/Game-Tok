@@ -40,6 +40,7 @@ async function getCreatorById(req, res) {
         socials
         followerCount
         followingCount
+        followers
         isVerified
         `,
     )
@@ -49,6 +50,12 @@ async function getCreatorById(req, res) {
   if (!creator) {
     throw new ApiError(404, "Creator not found");
   }
+
+  const isFollowing = creator.followers?.some(
+    (id) => id.toString() === req.user?._id?.toString(),
+  );
+
+  delete creator.followers;
 
   const clips = await clipModel
     .find({
@@ -95,6 +102,7 @@ async function getCreatorById(req, res) {
   return res.status(200).json(
     new ApiResponse(200, "Creator retrieved successfully", {
       creator,
+      isFollowing,
 
       clips: clips.map(withCaption),
 

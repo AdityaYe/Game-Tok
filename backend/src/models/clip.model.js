@@ -107,7 +107,9 @@ clipSchema
     this.description = value;
   });
 
-clipSchema.index({ gameName: "text" });
+clipSchema.index({ gameName: "text", tags: "text" });
+
+clipSchema.index({ gameName: 1, createdAt: -1 });
 
 clipSchema.index({ createdAt: -1 });
 

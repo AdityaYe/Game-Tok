@@ -41,6 +41,25 @@ function withCaption(clip) {
   };
 }
 
+function buildClipSearchFilter(query) {
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const queryRegex = new RegExp(escapedQuery, "i");
+
+  return {
+    isDeleted: {
+      $ne: true,
+    },
+    $or: [
+      {
+        gameName: queryRegex,
+      },
+      {
+        tags: queryRegex,
+      },
+    ],
+  };
+}
+
 async function createClip(req, res) {
   if (!req.file) {
     throw new ApiError(400, "Clip file is required");
@@ -145,6 +164,75 @@ async function getClips(req, res) {
 
         totalPages: Math.ceil(totalClips / limit),
 
+        hasMore: skip + clips.length < totalClips,
+      },
+    }),
+  );
+}
+
+async function searchClips(req, res) {
+  const query = req.query.q?.trim() || "";
+  const { page, limit, skip } = getPagination(req.query);
+
+  if (!query) {
+    return res.status(200).json(
+      new ApiResponse(200, "Clip search fetched successfully", {
+        clips: [],
+        pagination: {
+          page,
+          limit,
+          totalItems: 0,
+          totalPages: 0,
+          hasMore: false,
+        },
+      }),
+    );
+  }
+
+  const filter = buildClipSearchFilter(query);
+
+  const clips = await clipModel
+    .find(filter)
+    .select(
+      `
+        gameName
+        thumbnail
+        video
+        description
+        tags
+        creator
+        likeCount
+        commentCount
+        savesCount
+        views
+        createdAt
+        `,
+    )
+    .populate(
+      "creator",
+      `
+        fullName
+        avatar
+        isVerified
+        `,
+    )
+    .sort({
+      createdAt: -1,
+    })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalClips = await clipModel.countDocuments(filter);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Clip search fetched successfully", {
+      clips: clips.map(withCaption),
+      pagination: {
+        page,
+        limit,
+        totalItems: totalClips,
+        totalPages: Math.ceil(totalClips / limit),
         hasMore: skip + clips.length < totalClips,
       },
     }),
@@ -460,6 +548,7 @@ async function trackWatchTime(req, res) {
 module.exports = {
   createClip,
   getClips,
+  searchClips,
   likeClip,
   saveClip,
   getSavedClips,

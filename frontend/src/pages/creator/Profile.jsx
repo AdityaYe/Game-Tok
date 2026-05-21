@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FaInstagram,
@@ -10,6 +10,8 @@ import {
 
 import "../../styles/profile.css";
 import { useCreatorProfile } from "../../features/creator/hooks/useCreatorProfile";
+import { useFollowUser } from "../../features/users/hooks/useFollowUser";
+import useAuthStore from "../../store/authStore";
 import { optimizeImage } from "../../utils/cloudinary";
 
 const socialConfig = {
@@ -32,11 +34,53 @@ function getSocialEntries(socials = {}) {
 const Profile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const currentUser = useAuthStore((state) => state.user);
   const { data, isLoading } = useCreatorProfile(id);
+  const followMutation = useFollowUser();
   const profile = data?.creator;
   const clips = data?.clips || [];
   const socials = getSocialEntries(profile?.socials);
   const banner = optimizeImage(profile?.banner, 1400);
+  const isOwnProfile = currentUser?._id && currentUser._id === profile?._id;
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+
+  useEffect(() => {
+    setIsFollowing(!!data?.isFollowing);
+    setFollowerCount(profile?.followerCount ?? 0);
+  }, [data?.isFollowing, profile?.followerCount]);
+
+  const handleFollow = () => {
+    if (!profile?._id || followMutation.isPending) {
+      return;
+    }
+
+    const nextFollowing = !isFollowing;
+
+    setIsFollowing(nextFollowing);
+    setFollowerCount((count) =>
+      Math.max(0, count + (nextFollowing ? 1 : -1)),
+    );
+
+    followMutation.mutate(
+      {
+        userId: profile._id,
+        following: isFollowing,
+      },
+      {
+        onSuccess: (result) => {
+          setIsFollowing(result.following);
+          setFollowerCount(result.followerCount ?? 0);
+        },
+        onError: () => {
+          setIsFollowing(isFollowing);
+          setFollowerCount((count) =>
+            Math.max(0, count + (nextFollowing ? -1 : 1)),
+          );
+        },
+      },
+    );
+  };
 
   if (isLoading) {
     return <main className="creator-profile-page">Loading profile...</main>;
@@ -48,9 +92,22 @@ const Profile = () => {
         <div className="profile-cover">
           {banner && <img src={banner} alt="" />}
 
-          <h1 className="profile-cover-name">
-            {profile?.fullName || "GameTok Creator"}
-          </h1>
+          <div className="profile-cover-title">
+            <h1 className="profile-cover-name">
+              {profile?.fullName || "GameTok Creator"}
+            </h1>
+
+          {profile && currentUser && !isOwnProfile && (
+              <button
+                type="button"
+                className={`profile-follow-btn ${isFollowing ? "is-following" : ""}`}
+                onClick={handleFollow}
+                disabled={followMutation.isPending}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </button>
+            )}
+          </div>
 
           {socials.length > 0 && (
             <div className="profile-socials" aria-label="Social links">
@@ -85,7 +142,7 @@ const Profile = () => {
           <div className="profile-identity-copy">
             <div className="profile-stats-strip" aria-label="Profile stats">
               <div>
-                <strong>{profile?.followerCount ?? 0}</strong>
+                <strong>{followerCount}</strong>
                 <span>Followers</span>
               </div>
               <div>

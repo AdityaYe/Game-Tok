@@ -189,9 +189,11 @@ const ProfileHub = () => {
           <div className="profile-cover">
             {shownBanner && <img src={shownBanner} alt="" />}
 
-            <h1 id="profile-hub-title" className="profile-cover-name">
-              {user?.fullName || "GameTok Player"}
-            </h1>
+            <div className="profile-cover-title">
+              <h1 id="profile-hub-title" className="profile-cover-name">
+                {user?.fullName || "GameTok Player"}
+              </h1>
+            </div>
 
             {socialEntries.length > 0 && (
               <div className="profile-socials" aria-label="Social links">
