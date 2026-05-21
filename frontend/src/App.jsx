@@ -1,20 +1,26 @@
 import AppRoutes from "./routes/AppRoutes";
 
-import React, {lazy,Suspense} from "react";
 import { useAuthBootstrap } from "./features/auth/hooks/useAuthBootstrap";
-import { useAuth } from "./features/auth/hooks/useAuth";
+
 import ToastContainer from "./components/ui/ToastContainer";
 
 import "./styles/toast.css";
+import "./styles/form.css";
+
+import useThemeStore from "./store/themeStore";
 
 function App() {
-  useAuth();
   useAuthBootstrap();
 
-  return<>
-  <AppRoutes />
-  <ToastContainer />
-  </>
+  const theme = useThemeStore((state) => state.theme);
+
+  return (
+    <div className={`${theme}-theme`}>
+      <AppRoutes />
+
+      <ToastContainer />
+    </div>
+  );
 }
 
 export default App;

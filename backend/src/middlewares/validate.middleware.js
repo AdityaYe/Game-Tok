@@ -12,10 +12,14 @@ function validate(schema) {
       });
 
       req.validatedData = validatedData;
+      req.body = validatedData.body ?? req.body;
+      req.params = validatedData.params ?? req.params;
+      req.query = validatedData.query ?? req.query;
 
       next();
     } catch (err) {
-      const errors = err.errors?.map((e) => ({
+      const issues = err.errors || err.issues;
+      const errors = issues?.map((e) => ({
         field: e.path.join("."),
 
         message: e.message,

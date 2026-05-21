@@ -2,23 +2,21 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDebounce } from "../features/clips/hooks/useDebounce";
 import { useSearch } from "../features/search/hooks/useSearch";
+import { optimizeImage } from "../utils/cloudinary";
 
 import "../styles/search.css";
 
 const Search = () => {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 500);
-  const {
-    data: results,
-    isLoading: loading,
-  } = useSearch(debouncedQuery);
+  const { data: results, isLoading: loading } = useSearch(debouncedQuery);
 
   return (
     <div className="search-page">
       <div className="search-header">
         <h1 className="search-title">Search</h1>
 
-        <p className="search-subtitle">Discover creators, games, and tags.</p>
+        <p className="search-subtitle">Discover profiles, games, and tags.</p>
       </div>
 
       <div className="search-input-wrapper">
@@ -26,7 +24,7 @@ const Search = () => {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search creators, games, tags"
+          placeholder="Search profiles, games, tags"
           className="search-input"
         />
       </div>
@@ -35,30 +33,28 @@ const Search = () => {
 
       {results && (
         <div className="search-results">
-          {/* CREATORS */}
-
           <div className="search-section">
-            <h2 className="search-section-title">Creators</h2>
+            <h2 className="search-section-title">Profiles</h2>
 
             {results.creators?.length > 0 ? (
               <div className="search-creators-list">
                 {results.creators.map((creator) => (
                   <Link
                     key={creator._id}
-                    to={`/creator/${creator._id}`}
+                    to={`/profile/${creator._id}`}
                     className="search-creator-card"
                   >
                     <div className="search-creator-avatar">
                       {creator.avatar ? (
-                        <img src={creator.avatar} alt={creator.name} />
+                        <img src={optimizeImage(creator.avatar)} loading="lazy" alt={creator.fullName} />
                       ) : (
-                        creator.name?.[0]
+                        creator.fullName?.[0]
                       )}
                     </div>
 
                     <div className="search-creator-meta">
                       <span className="search-creator-name">
-                        @{creator.name}
+                        @{creator.fullName}
                       </span>
 
                       {creator.isVerified && (
@@ -69,7 +65,7 @@ const Search = () => {
                 ))}
               </div>
             ) : (
-              <p className="search-empty">No creators found.</p>
+              <p className="search-empty">No profiles found.</p>
             )}
           </div>
 
@@ -84,7 +80,8 @@ const Search = () => {
                   <div key={clip._id} className="search-game-card">
                     {clip.thumbnail && (
                       <img
-                        src={clip.thumbnail}
+                        src={optimizeImage(clip.thumbnail, 800)}
+                        loading="lazy"
                         alt={clip.gameName}
                         className="search-game-thumbnail"
                       />

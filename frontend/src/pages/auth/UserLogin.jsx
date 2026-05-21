@@ -1,92 +1,49 @@
-import React from 'react'
+import React from "react";
 
-import axios from 'axios'
+import { Link, useNavigate } from "react-router-dom";
 
-import { Link, useNavigate } from 'react-router-dom'
-
-import '../../styles/auth-shared.css'
-
+import "../../styles/auth-shared.css";
+import Button from "../../components/ui/form/Button";
+import { useUserLogin } from "../../features/auth/hooks/useAuthMutations";
 
 const UserLogin = () => {
+  const navigate = useNavigate();
+  const { mutate, isPending } = useUserLogin();
 
-  const navigate = useNavigate()
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-
-
-  const handleSubmit = async (e) => {
-
-    e.preventDefault()
-
-    try {
-
-      const email = e.target.email.value
-      const password = e.target.password.value
-
-
-
-      await axios.post(
-        "http://localhost:3000/api/v1/auth/user/login",
-        {
-          email,
-          password
-        },
-        {
-          withCredentials: true
-        }
-      )
-
-
-
-      navigate("/")
-
-    } catch (err) {
-
-      console.error(err)
-
-    }
-
-  }
-
-
+    mutate(
+      {
+        email: e.target.email.value,
+        password: e.target.password.value,
+      },
+      {
+        onSuccess: () => navigate("/"),
+      },
+    );
+  };
 
   return (
-
     <div className="auth-page-wrapper">
-
       <div
         className="auth-card"
         role="region"
         aria-labelledby="user-login-title"
       >
-
         <header>
-
-          <h1
-            id="user-login-title"
-            className="auth-title"
-          >
+          <h1 id="user-login-title" className="auth-title">
             Welcome Back
           </h1>
 
           <p className="auth-subtitle">
             Sign in to explore trending gaming clips.
           </p>
-
         </header>
 
-
-
-        <form
-          className="auth-form"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="field-group">
-
-            <label htmlFor="email">
-              Email
-            </label>
+            <label htmlFor="email">Email</label>
 
             <input
               id="email"
@@ -95,16 +52,10 @@ const UserLogin = () => {
               placeholder="you@example.com"
               autoComplete="email"
             />
-
           </div>
 
-
-
           <div className="field-group">
-
-            <label htmlFor="password">
-              Password
-            </label>
+            <label htmlFor="password">Password</label>
 
             <input
               id="password"
@@ -113,37 +64,19 @@ const UserLogin = () => {
               placeholder="••••••••"
               autoComplete="current-password"
             />
-
           </div>
 
-
-
-          <button
-            className="auth-submit"
-            type="submit"
-          >
+          <Button loading={isPending} type="submit">
             Sign In
-          </button>
-
+          </Button>
         </form>
 
-
-
         <div className="auth-alt-action">
-
-          New here?{' '}
-
-          <Link to="/user/register">
-            Create account
-          </Link>
-
+          New here? <Link to="/user/register">Create account</Link>
         </div>
-
       </div>
-
     </div>
+  );
+};
 
-  )
-}
-
-export default UserLogin
+export default UserLogin;

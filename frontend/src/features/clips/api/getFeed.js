@@ -1,10 +1,7 @@
-import api from "@/lib/api";
+import api, { unwrapApiData } from "@/lib/api";
 
 export async function getFeed(page) {
-  const { data } =
-    await api.get(
-      `/clips?page=${page}&limit=5`
-    );
+  const response = await api.get(`/clips?page=${page}&limit=5`);
 
-  return data;
+  return unwrapApiData(response);
 }

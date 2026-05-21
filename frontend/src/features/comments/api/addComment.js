@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function addComment({ clipId, text }) {
-  const { data } = await api.post(`/clips/${clipId}/comments`, { text });
+  const response = await api.post(`/clips/${clipId}/comments`, { text });
 
-  return data;
+  return unwrapApiData(response);
 }

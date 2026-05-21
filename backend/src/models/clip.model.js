@@ -89,8 +89,23 @@ const clipSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
   },
 );
+
+clipSchema
+  .virtual("caption")
+  .get(function getCaption() {
+    return this.description;
+  })
+  .set(function setCaption(value) {
+    this.description = value;
+  });
 
 clipSchema.index({ gameName: "text" });
 

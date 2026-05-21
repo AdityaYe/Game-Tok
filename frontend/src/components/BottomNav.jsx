@@ -1,7 +1,27 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
+import { FaFire, FaGamepad, FaUser } from 'react-icons/fa'
 
 import '../styles/bottom-nav.css'
+
+const navItems = [
+  {
+    to: '/',
+    end: true,
+    label: 'Clips',
+    icon: FaFire,
+  },
+  {
+    to: '/feed',
+    label: 'Feed',
+    icon: FaGamepad,
+  },
+  {
+    to: '/profile',
+    label: 'Profile',
+    icon: FaUser,
+  },
+]
 
 const BottomNav = () => {
   return (
@@ -12,68 +32,29 @@ const BottomNav = () => {
     >
 
       <div className="bottom-nav__inner">
+        {navItems.map((item) => {
+          const Icon = item.icon
 
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `bottom-nav__item ${isActive ? 'is-active' : ''}`
-          }
-        >
-          <span className="bottom-nav__icon">
+          return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `bottom-nav__item ${isActive ? 'is-active' : ''}`
+            }
+            aria-label={item.label}
+          >
+            <span className="bottom-nav__icon" aria-hidden="true">
+              <Icon />
+            </span>
 
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 10.5 12 3l9 7.5"/>
-              <path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/>
-            </svg>
-
-          </span>
-
-          <span className="bottom-nav__label">
-            Home
-          </span>
-
-        </NavLink>
-
-
-
-        <NavLink
-          to="/saved"
-          className={({ isActive }) =>
-            `bottom-nav__item ${isActive ? 'is-active' : ''}`
-          }
-        >
-          <span className="bottom-nav__icon">
-
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>
-            </svg>
-
-          </span>
-
-          <span className="bottom-nav__label">
-            Saved
-          </span>
-
-        </NavLink>
+            <span className="bottom-nav__label">
+              {item.label}
+            </span>
+          </NavLink>
+          )
+        })}
 
       </div>
 

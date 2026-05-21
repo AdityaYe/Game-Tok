@@ -1,6 +1,7 @@
 const eventBus = require("./eventBus");
 
 const { createNotification } = require("../services/notification.service");
+const logger = require("../config/logger");
 
 function registerNotificationEvents(io) {
   eventBus.on(
@@ -14,7 +15,7 @@ function registerNotificationEvents(io) {
           clip,
         });
 
-        io.to(recipient.toString()).emit("new_notification", {
+        io.to(`user:${recipient.toString()}`).emit("new_notification", {
           type,
           sender: senderName,
         });

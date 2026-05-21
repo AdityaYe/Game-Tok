@@ -19,7 +19,7 @@ export function useFeed() {
       pages
     ) => {
 
-      return lastPage.hasMore
+      return lastPage.pagination?.hasMore
         ? pages.length + 1
         : undefined;
     },

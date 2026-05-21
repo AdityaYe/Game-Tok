@@ -26,6 +26,8 @@ const env = {
 
   nodeEnv: process.env.NODE_ENV || "development",
 
+  cookieSecure: process.env.COOKIE_SECURE,
+
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,

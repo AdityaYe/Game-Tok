@@ -1,322 +1,148 @@
 :root {
-
-  /* =========================
-     COLORS
-  ========================= */
-
-  --color-bg: #060816;
-
-  --color-surface: #111827;
-
-  --color-surface-alt: #182235;
-
-  --color-surface-elevated: #1e293b;
-
-  --color-border:
-    rgba(255,255,255,.08);
-
-  --color-text: #f8fafc;
-
-  --color-text-secondary: #94a3b8;
-
-  --color-accent: #6366f1;
-
-  --color-accent-hover: #818cf8;
-
-  --color-danger: #ef4444;
-
-
-
-  /* =========================
-     RADII
-  ========================= */
-
-  --radius-xs: 4px;
-
-  --radius-sm: 10px;
-
-  --radius-md: 18px;
-
-  --radius-lg: 28px;
-
-
-
-  /* =========================
-     TYPOGRAPHY
-  ========================= */
-
-  --font-stack:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-
-
-  /* =========================
-     SPACING
-  ========================= */
-
-  --space-1: 4px;
-
-  --space-2: 8px;
-
-  --space-3: 12px;
-
-  --space-4: 16px;
-
-  --space-5: 20px;
-
-  --space-6: 24px;
-
-  --space-7: 28px;
-
-  --space-8: 32px;
-
-  --space-10: 40px;
-
-
-
-  /* =========================
-     SHADOWS
-  ========================= */
-
-  --shadow-sm:
-    0 4px 10px rgba(0,0,0,.18);
-
-  --shadow-md:
-    0 12px 30px rgba(0,0,0,.24);
-
-  --shadow-lg:
-    0 24px 60px rgba(0,0,0,.32);
-
-
-
-  /* =========================
-     TRANSITIONS
-  ========================= */
-
-  --transition-base:
-    180ms cubic-bezier(.4,0,.2,1);
-
-}
-
-
-
-/* =========================
-   LIGHT MODE
-========================= */
-
-@media (prefers-color-scheme: light) {
-
-  :root {
-
-    --color-bg: #f3f6fb;
-
-    --color-surface: #ffffff;
-
-    --color-surface-alt: #eef2f8;
-
-    --color-surface-elevated: #ffffff;
-
-    --color-border:
-      rgba(15,23,42,.08);
-
-    --color-text: #0f172a;
-
-    --color-text-secondary: #475569;
-
-    --color-accent: #4f46e5;
-
-    --color-accent-hover: #4338ca;
-
-    --color-danger: #dc2626;
-
-  }
-
-}
-
-
-
-/* =========================
-   BASE
-========================= */
-
-* {
-
-  box-sizing: border-box;
-
-}
-
-
-
-html {
-
   color-scheme: dark;
 
+  --font-stack: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --color-bg: #05070d;
+  --color-bg-elevated: #090d16;
+  --color-surface: #101622;
+  --color-surface-alt: #151d2b;
+  --color-card: #141c2a;
+  --color-glass: rgba(10, 15, 25, 0.72);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-text: #f7fbff;
+  --color-text-secondary: #a9b4c5;
+  --color-muted: #7f8ca3;
+  --color-accent: #20f6c7;
+  --color-accent-hover: #6dffe0;
+  --color-accent-2: #8a5cff;
+  --color-accent-3: #ff3d81;
+  --color-primary: var(--color-accent);
+  --color-danger: #ff4d6d;
+  --color-success: #29f58b;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-full: 999px;
+
+  --shell-width: 480px;
+  --top-bar-height: 64px;
+  --bottom-nav-height: 76px;
+
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 32px 90px rgba(0, 0, 0, 0.5);
+  --glow-accent: 0 0 30px rgba(32, 246, 199, 0.22);
+
+  --transition-fast: 160ms ease;
+  --transition-base: 220ms ease;
+  --transition-normal: 300ms ease;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
+html {
+  width: 100%;
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
 
 body {
-
   margin: 0;
-
-  font-family:
-    var(--font-stack);
-
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  font-family: var(--font-stack);
+  color: var(--color-text);
   background:
-    var(--color-bg);
-
-  color:
-    var(--color-text);
-
+    radial-gradient(circle at 20% 0%, rgba(32, 246, 199, 0.14), transparent 30%),
+    radial-gradient(circle at 90% 16%, rgba(138, 92, 255, 0.16), transparent 28%),
+    linear-gradient(145deg, #04060b 0%, #07101c 48%, #05070d 100%);
   line-height: 1.5;
-
-  -webkit-font-smoothing:
-    antialiased;
-
-  text-rendering:
-    optimizeLegibility;
-
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-
-
-
-/* =========================
-   ROOT
-========================= */
 
 #root {
-
   min-height: 100dvh;
-
 }
-
-
-
-/* =========================
-   MEDIA
-========================= */
 
 img,
 video {
-
   display: block;
-
   max-width: 100%;
-
 }
-
-
-
-/* =========================
-   LINKS
-========================= */
 
 a {
-
-  color:
-    var(--color-accent);
-
+  color: inherit;
   text-decoration: none;
-
-  transition:
-    color var(--transition-base);
-
 }
 
-
-
-a:hover,
-a:focus-visible {
-
-  color:
-    var(--color-accent-hover);
-
-}
-
-
-
-/* =========================
-   BUTTONS
-========================= */
-
-button {
-
-  font: inherit;
-
-}
-
-
-
-/* =========================
-   INPUTS
-========================= */
-
+button,
 input,
 textarea,
-button {
-
-  font-family:
-    inherit;
-
+select {
+  font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
 
-
-/* =========================
-   SELECTION
-========================= */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
 
 ::selection {
-
-  background:
-    var(--color-accent);
-
-  color: #fff;
-
+  color: #00130f;
+  background: var(--color-accent);
 }
-
-
-
-/* =========================
-   SCROLLBAR
-========================= */
 
 ::-webkit-scrollbar {
-
   width: 8px;
-
 }
-
-
 
 ::-webkit-scrollbar-track {
-
-  background:
-    transparent;
-
+  background: transparent;
 }
-
-
 
 ::-webkit-scrollbar-thumb {
-
-  border-radius: 999px;
-
-  background:
-    rgba(255,255,255,.12);
-
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.14);
 }
 
+.dark-theme,
+.light-theme {
+  min-height: 100dvh;
+}
 
-
-::-webkit-scrollbar-thumb:hover {
-
-  background:
-    rgba(255,255,255,.2);
-
+.surface-panel {
+  border: 1px solid var(--color-border);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(20px);
 }

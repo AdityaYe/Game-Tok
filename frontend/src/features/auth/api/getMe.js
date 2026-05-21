@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function getMe() {
-  const { data } = await api.get("/auth/me");
+  const response = await api.get("/auth/me");
 
-  return data;
+  return unwrapApiData(response);
 }

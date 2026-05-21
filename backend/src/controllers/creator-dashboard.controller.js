@@ -7,6 +7,13 @@ const { getCreatorStats } = require("../services/dashboard.service");
 
 const { getPagination } = require("../utils/pagination");
 
+function withCaption(clip) {
+  return {
+    ...clip,
+    caption: clip.caption ?? clip.description ?? "",
+  };
+}
+
 async function getCreatorDashboard(req, res) {
   const creatorId = req.user._id;
 
@@ -80,7 +87,7 @@ async function getCreatorDashboard(req, res) {
         isVerified: req.user.isVerified,
       },
 
-      clips,
+      clips: clips.map(withCaption),
 
       stats: {
         totalClips: stats.totalClips,
@@ -116,7 +123,7 @@ async function getCreatorDashboard(req, res) {
 async function updateClip(req, res) {
   const { clipId } = req.params;
 
-  const { gameName, description, tags } = req.body;
+  const { gameName, caption, description, tags } = req.body;
 
   const clip = await clipModel.findOne({
     _id: clipId,
@@ -136,8 +143,10 @@ async function updateClip(req, res) {
     clip.gameName = gameName;
   }
 
-  if (description) {
-    clip.description = description;
+  const nextCaption = caption ?? description;
+
+  if (nextCaption) {
+    clip.description = nextCaption;
   }
 
   if (tags) {
@@ -148,7 +157,7 @@ async function updateClip(req, res) {
 
   return res.status(200).json(
     new ApiResponse(200, "Clip updated successfully", {
-      clip,
+      clip: withCaption(clip.toObject()),
     }),
   );
 }

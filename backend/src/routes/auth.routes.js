@@ -1,58 +1,48 @@
 const express = require("express");
 
-const authController = require(
-  "../controllers/auth.controller"
-);
+const authController = require("../controllers/auth.controller");
 
-const validate = require(
-  "../middlewares/validate.middleware"
-);
+const validate = require("../middlewares/validate.middleware");
 
-const {
-  registerSchema,
-  loginSchema,
-} = require(
-  "../validators/auth.validator"
-);
+const { authMiddleware } = require("../middlewares/auth.middleware");
 
-const asyncHandler = require(
-  "../utils/asyncHandler"
-);
+const upload = require("../middlewares/upload.middleware");
+
+const { registerSchema, loginSchema } = require("../validators/auth.validator");
+
+const asyncHandler = require("../utils/asyncHandler");
 
 const router = express.Router();
+
+router.get(
+  "/me",
+  authMiddleware,
+  asyncHandler(authController.getMe),
+);
+
+router.patch(
+  "/profile",
+  authMiddleware,
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "banner", maxCount: 1 },
+  ]),
+  asyncHandler(authController.updateProfile),
+);
 
 router.post(
   "/user/register",
   validate(registerSchema),
-  asyncHandler(authController.registerUser)
+  asyncHandler(authController.registerUser),
 );
 
 router.post(
   "/user/login",
   validate(loginSchema),
-  asyncHandler(authController.loginUser)
+  asyncHandler(authController.loginUser),
 );
 
-router.get(
-  "/user/logout",
-  authController.logoutUser
-);
-
-router.post(
-  "/creator/register",
-  validate(registerSchema),
-  asyncHandler(authController.registerCreator)
-);
-
-router.post(
-  "/creator/login",
-  validate(loginSchema),
-  asyncHandler(authController.loginCreator)
-);
-
-router.get(
-  "/creator/logout",
-  authController.logoutCreator
-);
+router.post("/logout", authController.logoutUser);
+router.get("/user/logout", authController.logoutUser);
 
 module.exports = router;

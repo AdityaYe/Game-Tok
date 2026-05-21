@@ -14,6 +14,11 @@ const updateClipSchema = z.object({
       .max(100)
       .optional(),
 
+    caption: z
+      .string()
+      .max(300)
+      .optional(),
+
     description: z
       .string()
       .max(300)

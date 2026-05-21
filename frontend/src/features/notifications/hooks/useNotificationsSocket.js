@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useSocket } from "../../../providers/SocketProvider";
+import { useSocket } from "../../../providers/useSocket";
 
 export function useNotificationsSocket(callback) {
   const socket = useSocket();

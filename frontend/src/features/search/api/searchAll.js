@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function searchAll(query) {
-  const { data } = await api.get(`/search?q=${query}`);
+  const response = await api.get(`/search?q=${encodeURIComponent(query)}`);
 
-  return data;
+  return unwrapApiData(response);
 }

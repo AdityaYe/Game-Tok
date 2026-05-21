@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function deleteComment(commentId) {
-  const { data } = await api.delete(`/clips/comments/${commentId}`);
+  const response = await api.delete(`/clips/comments/${commentId}`);
 
-  return data;
+  return unwrapApiData(response);
 }

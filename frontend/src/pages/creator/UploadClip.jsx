@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import axios from "axios";
-
 import { useNavigate } from "react-router-dom";
 
 import { useUploadClip } from "../../features/clips/hooks/useUploadClip";
+import { searchGames } from "../../features/games/api/gamesApi";
 
 import "../../styles/upload-clip.css";
 
 const UploadClip = () => {
   const [gameName, setGameName] = useState("");
 
-  const [description, setDescription] = useState("");
+  const [caption, setCaption] = useState("");
 
   const [selectedGame, setSelectedGame] = useState(null);
 
@@ -75,11 +74,9 @@ const UploadClip = () => {
     const timeout = setTimeout(
       async () => {
         try {
-          const response = await axios.get(
-            `http://localhost:3000/api/v1/games/search?q=${gameSearch}`,
-          );
+          const response = await searchGames(gameSearch);
 
-          setGameResults(response.data);
+          setGameResults(response.games || []);
 
           setShowDropdown(true);
         } catch (err) {
@@ -176,7 +173,8 @@ const UploadClip = () => {
 
     formData.append("gameName", gameName);
 
-    formData.append("description", description);
+    formData.append("caption", caption);
+    formData.append("description", caption);
 
     formData.append("clip", videoFile);
 
@@ -389,7 +387,7 @@ const UploadClip = () => {
             )}
           </div>
 
-          {/* DESCRIPTION */}
+          {/* CAPTION */}
 
           <div
             className="
@@ -398,21 +396,20 @@ const UploadClip = () => {
           >
             <label
               htmlFor="
-              description
+               caption
             "
             >
-              Description
+              Caption
             </label>
 
             <textarea
-              id="description"
+              id="caption"
               rows={4}
               placeholder="
-                Describe the
-                gameplay moment...
+                Add a caption for this gameplay moment...
               "
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
             />
           </div>
 

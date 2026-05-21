@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function getComments(clipId) {
-  const { data } = await api.get(`/clips/${clipId}/comments`);
+  const response = await api.get(`/clips/${clipId}/comments`);
 
-  return data;
+  return unwrapApiData(response);
 }

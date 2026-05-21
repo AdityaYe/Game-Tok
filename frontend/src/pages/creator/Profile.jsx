@@ -1,181 +1,149 @@
-import React, { useEffect, useState } from 'react'
-
-import axios from 'axios'
-
-import { useParams } from 'react-router-dom'
-
-import '../../styles/profile.css'
-
-
-const Profile = () => {
-
-  const { id } = useParams()
-
-  const [profile, setProfile] = useState(null)
-  const [clips, setClips] = useState([])
-
-
-
-  useEffect(() => {
-
-    axios.get(
-      `http://localhost:3000/api/v1/creator/${id}`,
-      {
-        withCredentials: true
-      }
-    )
-    .then((response) => {
-
-      setProfile(response.data.creator)
-
-      setClips(response.data.creator.clips)
-
-    })
-    .catch((err) => {
-      console.error(err)
-    })
-
-  }, [id])
-
-
-
-  return (
-
-    <main className="profile-page">
-
-      <section className="profile-header">
-
-        <div className="profile-meta">
-
-          <img
-            className="profile-avatar"
-            src="https://images.unsplash.com/photo-1511512578047-dfb367046420"
-            alt="Creator avatar"
-          />
-
-
-
-          <div className="profile-info">
-
-            <h1
-              className="profile-pill profile-business"
-              title="Creator name"
-            >
-              {profile?.name}
-            </h1>
-
-
-
-            <p
-              className="profile-pill profile-address"
-              title="Creator location"
-            >
-              {profile?.address}
-            </p>
-
-          </div>
-
-        </div>
-
-
-
-        <div
-          className="profile-stats"
-          role="list"
-          aria-label="Profile stats"
-        >
-
-          <div
-            className="profile-stat"
-            role="listitem"
-          >
-
-            <span className="profile-stat-label">
-              clips
-            </span>
-
-            <span className="profile-stat-value">
-              {clips.length}
-            </span>
-
-          </div>
-
-
-
-          <div
-            className="profile-stat"
-            role="listitem"
-          >
-
-            <span className="profile-stat-label">
-              likes
-            </span>
-
-            <span className="profile-stat-value">
-
-              {clips.reduce(
-                (total, clip) =>
-                  total + (clip.likeCount || 0),
-                0
-              )}
-
-            </span>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-
-      <hr className="profile-sep" />
-
-
-
-      <section
-        className="profile-grid"
-        aria-label="Creator clips"
-      >
-
-        {clips.map((clip) => (
-
-          <div
-            key={clip._id}
-            className="profile-grid-item"
-          >
-
-            <video
-              className="profile-grid-video"
-              style={{
-                objectFit: 'cover',
-                width: '100%',
-                height: '100%'
-              }}
-              src={clip.video}
-              muted
-              loop
-            />
-
-
-
-            <div className="profile-grid-overlay">
-
-              <h3 className="profile-grid-title">
-                {clip.gameName}
-              </h3>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </section>
-
-    </main>
-
-  )
+import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  FaInstagram,
+  FaPlay,
+  FaTwitch,
+  FaTwitter,
+  FaYoutube,
+} from "react-icons/fa";
+
+import "../../styles/profile.css";
+import { useCreatorProfile } from "../../features/creator/hooks/useCreatorProfile";
+import { optimizeImage } from "../../utils/cloudinary";
+
+const socialConfig = {
+  youtube: { label: "YouTube", icon: FaYoutube },
+  twitch: { label: "Twitch", icon: FaTwitch },
+  twitter: { label: "X", icon: FaTwitter },
+  instagram: { label: "Instagram", icon: FaInstagram },
+};
+
+function getSocialEntries(socials = {}) {
+  return Object.entries(socialConfig)
+    .map(([key, config]) => ({
+      key,
+      ...config,
+      href: socials?.[key],
+    }))
+    .filter((item) => item.href);
 }
 
-export default Profile
+const Profile = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { data, isLoading } = useCreatorProfile(id);
+  const profile = data?.creator;
+  const clips = data?.clips || [];
+  const socials = getSocialEntries(profile?.socials);
+  const banner = optimizeImage(profile?.banner, 1400);
+
+  if (isLoading) {
+    return <main className="creator-profile-page">Loading profile...</main>;
+  }
+
+  return (
+    <main className="creator-profile-page">
+      <section className="profile-identity-hero">
+        <div className="profile-cover">
+          {banner && <img src={banner} alt="" />}
+
+          <h1 className="profile-cover-name">
+            {profile?.fullName || "GameTok Creator"}
+          </h1>
+
+          {socials.length > 0 && (
+            <div className="profile-socials" aria-label="Social links">
+              {socials.map(({ key, label, icon: Icon, href }) => (
+                <a
+                  key={key}
+                  className="profile-social-pill"
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                >
+                  <Icon />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="profile-identity-panel">
+          <div className="profile-hub__avatar">
+            {profile?.avatar ? (
+              <img
+                src={optimizeImage(profile.avatar, 600)}
+                alt={profile?.fullName || "Profile avatar"}
+              />
+            ) : (
+              <span>{profile?.fullName?.[0] || "G"}</span>
+            )}
+          </div>
+
+          <div className="profile-identity-copy">
+            <div className="profile-stats-strip" aria-label="Profile stats">
+              <div>
+                <strong>{profile?.followerCount ?? 0}</strong>
+                <span>Followers</span>
+              </div>
+              <div>
+                <strong>{profile?.followingCount ?? 0}</strong>
+                <span>Following</span>
+              </div>
+              <div>
+                <strong>{clips.length}</strong>
+                <span>Uploads</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {profile?.bio && <p className="profile-hub__bio">{profile.bio}</p>}
+      </section>
+
+      <section className="profile-section" aria-label="Profile clips">
+        <div className="profile-section__header">
+          <h2>Creator clips</h2>
+        </div>
+
+        {clips.length > 0 ? (
+          <div className="profile-upload-grid">
+            {clips.map((clip) => (
+              <button
+                key={clip._id}
+                type="button"
+                className="profile-upload-card"
+                onClick={() =>
+                  navigate(`/profile/clips/${clip._id}`, {
+                    state: { clips },
+                  })
+                }
+              >
+                <video
+                  src={clip.video}
+                  poster={clip.thumbnail}
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+                <span className="profile-upload-card__play" aria-hidden="true">
+                  <FaPlay />
+                </span>
+                <div>
+                  <strong>{clip.gameName || "Gameplay clip"}</strong>
+                  <span>{clip.likeCount || 0} likes</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="profile-empty">No clips uploaded yet.</p>
+        )}
+      </section>
+    </main>
+  );
+};
+
+export default Profile;

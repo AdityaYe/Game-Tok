@@ -21,12 +21,14 @@ const Home = () => {
     isLoading,
   } = useFeed();
 
-  const clips = data?.pages.flatMap((page) => page.clips) || [];
+  const clips = data?.pages.flatMap((page) => page.clips || []) || [];
 
   const loadMore = () => {
     if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+      return fetchNextPage();
     }
+
+    return Promise.resolve();
   };
 
   if (isLoading) {

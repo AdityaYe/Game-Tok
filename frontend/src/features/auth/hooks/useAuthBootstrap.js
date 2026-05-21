@@ -1,25 +1,38 @@
 import { useEffect } from "react";
 
-import api from "../../../lib/api";
-
 import useAuthStore from "../../../store/authStore";
+import { getMe } from "../api/getMe";
 
 export function useAuthBootstrap() {
   const setUser = useAuthStore((state) => state.setUser);
 
   const clearUser = useAuthStore((state) => state.clearUser);
 
+  const setAuthLoading = useAuthStore((state) => state.setAuthLoading);
+
   useEffect(() => {
+    let isMounted = true;
+
+    setAuthLoading();
+
     const bootstrap = async () => {
       try {
-        const { data } = await api.get("/auth/me");
+        const data = await getMe();
 
-        setUser(data.user);
+        if (isMounted) {
+          setUser(data.user);
+        }
       } catch {
-        clearUser();
+        if (isMounted) {
+          clearUser();
+        }
       }
     };
 
     bootstrap();
-  }, [setUser, clearUser]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setUser, clearUser, setAuthLoading]);
 }

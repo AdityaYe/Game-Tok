@@ -9,7 +9,10 @@ const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
 
 const { errorHandler } = require("./middlewares/error.middleware");
-const { authLimiter,apiLimiter } = require("./middlewares/ratelimit.middleware");
+const {
+  authLimiter,
+  apiLimiter,
+} = require("./middlewares/ratelimit.middleware");
 const requestIdMiddleware = require("./middlewares/requestId.middleware");
 
 const authRoutes = require("./routes/auth.routes");
@@ -25,20 +28,16 @@ const app = express();
 
 const API_PREFIX = "/api/v1";
 
-const allowedOrigins = [env.CLIENT_URL];
+const allowedOrigins = [env.clientUrl];
 
 app.use(
   cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
+    origin: allowedOrigins,
+
     credentials: true,
   }),
 );
+
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -68,13 +67,14 @@ app.use(
 );
 
 app.use(apiLimiter);
-app.use("/api/auth", authLimiter);
+app.use(`${API_PREFIX}/auth`, authLimiter);
 app.get("/", (req, res) => {
   res.send("GameTok API Running");
 });
 
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/clips`, clipRoutes);
+app.use(`${API_PREFIX}/dashboard`, creatorDashboardRoutes);
 app.use(`${API_PREFIX}/creator/dashboard`, creatorDashboardRoutes);
 app.use(`${API_PREFIX}/creator`, creatorRoutes);
 app.use(`${API_PREFIX}/games`, gameRoutes);

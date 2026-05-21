@@ -5,7 +5,14 @@ const registerSchema = z.object({
     fullName: z
       .string()
       .min(3)
-      .max(50),
+      .max(50)
+      .optional(),
+
+    name: z
+      .string()
+      .min(3)
+      .max(50)
+      .optional(),
 
     email: z
       .string()
@@ -15,6 +22,9 @@ const registerSchema = z.object({
       .string()
       .min(6)
       .max(100),
+  }).refine((data) => data.fullName || data.name, {
+    message: "Name is required",
+    path: ["fullName"],
   }),
 });
 

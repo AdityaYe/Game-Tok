@@ -12,7 +12,7 @@ const {
   generateThumbnail,
 } = require("../services/storage.service");
 
-const eventbus = require("../events/eventBus");
+const eventBus = require("../events/eventBus");
 
 const { getPagination } = require("../utils/pagination");
 
@@ -34,6 +34,13 @@ function calculateTrendingScore(clip) {
   return engagementScore + recencyBoost;
 }
 
+function withCaption(clip) {
+  return {
+    ...clip,
+    caption: clip.caption ?? clip.description ?? "",
+  };
+}
+
 async function createClip(req, res) {
   if (!req.file) {
     throw new ApiError(400, "Clip file is required");
@@ -48,7 +55,7 @@ async function createClip(req, res) {
 
     thumbnail,
 
-    description: req.body.description,
+    description: req.body.caption ?? req.body.description ?? "",
 
     genre: req.body.genre,
 
@@ -60,14 +67,12 @@ async function createClip(req, res) {
 
     videoPublicId: uploadResult.public_id,
 
-    tags: Array.isArray(req.body.tags)
-      ? req.body.tags
-      : JSON.parse(req.body.tags || "[]"),
+    tags: Array.isArray(req.body.tags) ? req.body.tags : [],
   });
 
   return res.status(201).json(
     new ApiResponse(201, "Clip uploaded successfully", {
-      clip,
+      clip: withCaption(clip.toObject()),
     }),
   );
 }
@@ -123,7 +128,7 @@ async function getClips(req, res) {
     },
   });
 
-  const rankedClips = clips.sort(
+  const rankedClips = clips.map(withCaption).sort(
     (a, b) => calculateTrendingScore(b) - calculateTrendingScore(a),
   );
 
@@ -147,7 +152,7 @@ async function getClips(req, res) {
 }
 
 async function likeClip(req, res) {
-  const { clipId } = req.body;
+  const { clipId } = req.params;
 
   const existingLike = await likeModel.findOne({
     user: req.user._id,
@@ -189,13 +194,15 @@ async function likeClip(req, res) {
     },
   });
 
-  eventBus.emit("notification:create", {
-    recipient: clip.creator,
-    sender: req.user._id,
-    type: "like",
-    clip: clip._id,
-    senderName: req.user.fullName,
-  });
+  if (clip.creator.toString() !== req.user._id.toString()) {
+    eventBus.emit("notification:create", {
+      recipient: clip.creator,
+      sender: req.user._id,
+      type: "like",
+      clip: clip._id,
+      senderName: req.user.fullName,
+    });
+  }
 
   return res.status(201).json(
     new ApiResponse(201, "Clip liked successfully", {
@@ -205,7 +212,8 @@ async function likeClip(req, res) {
 }
 
 async function addComment(req, res) {
-  const { clipId, text } = req.body;
+  const { clipId } = req.params;
+  const { text } = req.body;
 
   const clip = await clipModel.findById(clipId);
 
@@ -227,13 +235,15 @@ async function addComment(req, res) {
     },
   });
 
-  eventBus.emit("notification:create", {
-    recipient: clip.creator,
-    sender: req.user._id,
-    type: "like",
-    clip: clip._id,
-    senderName: req.user.fullName,
-  });
+  if (clip.creator.toString() !== req.user._id.toString()) {
+    eventBus.emit("notification:create", {
+      recipient: clip.creator,
+      sender: req.user._id,
+      type: "comment",
+      clip: clip._id,
+      senderName: req.user.fullName,
+    });
+  }
 
   return res.status(201).json(
     new ApiResponse(201, "Comment added successfully", {
@@ -326,7 +336,7 @@ async function getComments(req, res) {
 }
 
 async function saveClip(req, res) {
-  const { clipId } = req.body;
+  const { clipId } = req.params;
 
   const existingSave = await saveModel.findOne({
     user: req.user._id,
@@ -419,7 +429,7 @@ async function getSavedClips(req, res) {
 }
 
 async function trackView(req, res) {
-  const { clipId } = req.body;
+  const { clipId } = req.params;
 
   await clipModel.findByIdAndUpdate(clipId, {
     $inc: {
@@ -433,7 +443,8 @@ async function trackView(req, res) {
 }
 
 async function trackWatchTime(req, res) {
-  const { clipId, seconds } = req.body;
+  const { clipId } = req.params;
+  const { seconds = 0 } = req.body;
 
   await clipModel.findByIdAndUpdate(clipId, {
     $inc: {

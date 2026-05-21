@@ -1,10 +1,9 @@
-import { createContext, useContext, useEffect } from "react";
+import { useEffect } from "react";
 
 import socket from "../socket";
 
 import useAuthStore from "../store/authStore";
-
-const SocketContext = createContext(null);
+import { SocketContext } from "./socketContext";
 
 export const SocketProvider = ({ children }) => {
   const user = useAuthStore((state) => state.user);
@@ -14,9 +13,9 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    socket.connect();
-
-    socket.emit("join", user._id);
+    if (!socket.connected) {
+      socket.connect();
+    }
 
     return () => {
       socket.disconnect();
@@ -27,7 +26,3 @@ export const SocketProvider = ({ children }) => {
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 };
-
-export function useSocket() {
-  return useContext(SocketContext);
-}

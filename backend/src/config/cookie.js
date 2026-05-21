@@ -1,14 +1,15 @@
 const env = require("./env");
 
+const secureCookie =
+  env.cookieSecure === "true" ||
+  (env.nodeEnv === "production" && env.clientUrl?.startsWith("https://"));
+
 const cookieOptions = {
   httpOnly: true,
 
-  secure: env.nodeEnv === "production",
+  secure: secureCookie,
 
-  sameSite:
-    env.nodeEnv === "production"
-      ? "none"
-      : "lax",
+  sameSite: secureCookie ? "none" : "lax",
 
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };

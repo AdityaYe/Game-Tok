@@ -1,7 +1,7 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function uploadClip({ formData, onUploadProgress }) {
-  const { data } = await api.post(
+  const response = await api.post(
     "/clips",
 
     formData,
@@ -15,5 +15,5 @@ export async function uploadClip({ formData, onUploadProgress }) {
     },
   );
 
-  return data;
+  return unwrapApiData(response);
 }

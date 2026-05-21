@@ -1,0 +1,128 @@
+@import './theme.css';
+
+.search-page,
+.notifications-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.search-header,
+.notifications-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.search-title,
+.notifications-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.search-subtitle,
+.notifications-subtitle,
+.search-empty,
+.notifications-empty,
+.search-loading,
+.notifications-loading {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.search-input-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.search-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-results,
+.search-section,
+.search-creators-list,
+.search-games-list,
+.search-tags-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.search-section {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.search-section-title {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.search-creator-card,
+.search-game-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.search-creator-avatar,
+.notification-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  color: #00130f;
+  font-weight: 900;
+}
+
+.search-creator-avatar img,
+.notification-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.search-creator-meta {
+  display: grid;
+  gap: 2px;
+}
+
+.search-creator-name {
+  font-weight: 800;
+}
+
+.search-verified {
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+}
+
+.search-game-thumbnail {
+  width: 68px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.search-tag {
+  justify-self: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  background: rgba(32, 246, 199, 0.1);
+}

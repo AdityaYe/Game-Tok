@@ -1,49 +1,21 @@
-import React, { useEffect, useState } from "react";
-
-import axios from "axios";
+import React, { useCallback } from "react";
 
 import "../styles/notifications.css";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "../features/notifications/hooks/useNotifications";
+import { useNotificationsSocket } from "../features/notifications/hooks/useNotificationsSocket";
+import { optimizeImage } from "../utils/cloudinary";
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([]);
+  const queryClient = useQueryClient();
+  const { data, isLoading: loading } = useNotifications();
+  const notifications = data?.notifications || [];
 
-  const [loading, setLoading] = useState(true);
+  const handleNotification = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  }, [queryClient]);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    socket.on(
-      "new_notification",
-
-      (notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-      },
-    );
-
-    return () => {
-      socket.off("new_notification");
-    };
-  }, []);
-
-  async function fetchNotifications() {
-    try {
-      const response = await axios.get(
-        "http://localhost:3000/api/v1/notifications",
-
-        {
-          withCredentials: true,
-        },
-      );
-
-      setNotifications(response.data.notifications || []);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useNotificationsSocket(handleNotification);
 
   function getNotificationText(notification) {
     switch (notification.type) {
@@ -82,17 +54,18 @@ const Notifications = () => {
               <div className="notification-avatar">
                 {notification.sender?.avatar ? (
                   <img
-                    src={notification.sender.avatar}
-                    alt={notification.sender.name}
+                    src={optimizeImage(notification.sender.avatar, 800)}
+                    loading="lazy"
+                    alt={notification.sender.fullName}
                   />
                 ) : (
-                  notification.sender?.name?.[0]
+                  notification.sender?.fullName?.[0]
                 )}
               </div>
 
               <div className="notification-content">
                 <div className="notification-text">
-                  <strong>@{notification.sender?.name}</strong>{" "}
+                  <strong>@{notification.sender?.fullName}</strong>{" "}
                   {getNotificationText(notification)}
                 </div>
 
@@ -103,7 +76,8 @@ const Notifications = () => {
 
               {notification.clip?.thumbnail && (
                 <img
-                  src={notification.clip.thumbnail}
+                  src={optimizeImage(notification.clip.thumbnail, 800)}
+                  loading="lazy"
                   alt={notification.clip.gameName}
                   className="notification-clip-thumbnail"
                 />

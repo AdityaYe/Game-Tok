@@ -1,7 +1,7 @@
 const express = require("express");
 
 const clipController = require("../controllers/clip.controller");
-const {authMiddleware,requireCreator} = require("../middlewares/auth.middleware");
+const { authMiddleware } = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/upload.middleware");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middlewares/validate.middleware");
@@ -11,8 +11,8 @@ const router = express.Router();
 
 router.get("/saved", authMiddleware, asyncHandler(clipController.getSavedClips));
 router.get("/:clipId/comments", asyncHandler(clipController.getComments));
-router.get("/", authMiddleware, asyncHandler(clipController.getClips),);
-router.post("/", authMiddleware, requireCreator, upload.single("clip"), validate(createClipSchema), asyncHandler(clipController.createClip),);
+router.get("/", asyncHandler(clipController.getClips),);
+router.post("/", authMiddleware, upload.single("clip"), validate(createClipSchema), asyncHandler(clipController.createClip),);
 router.post("/:clipId/like", authMiddleware, asyncHandler(clipController.likeClip));
 router.post("/:clipId/save", authMiddleware, asyncHandler(clipController.saveClip));
 router.post("/:clipId/comments", authMiddleware, validate(commentSchema), asyncHandler(clipController.addComment),);

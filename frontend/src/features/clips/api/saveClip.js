@@ -1,13 +1,10 @@
-import api from "../../../lib/api";
+import api, { unwrapApiData } from "../../../lib/api";
 
 export async function saveClip(
   clipId
 ) {
 
-  const { data } =
-    await api.post(
-      `/clips/${clipId}/save`
-    );
+  const response = await api.post(`/clips/${clipId}/save`);
 
-  return data;
+  return unwrapApiData(response);
 }

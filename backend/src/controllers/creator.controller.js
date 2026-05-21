@@ -12,9 +12,16 @@ const {
   deleteMedia,
 } = require("../services/storage.service");
 
-const eventbus = require("../events/eventBus");
+const eventBus = require("../events/eventBus");
 
 const { getPagination } = require("../utils/pagination");
+
+function withCaption(clip) {
+  return {
+    ...clip,
+    caption: clip.caption ?? clip.description ?? "",
+  };
+}
 
 async function getCreatorById(req, res) {
   const creatorId = req.params.id;
@@ -89,7 +96,7 @@ async function getCreatorById(req, res) {
     new ApiResponse(200, "Creator retrieved successfully", {
       creator,
 
-      clips,
+      clips: clips.map(withCaption),
 
       pagination: {
         page,
@@ -152,6 +159,35 @@ async function updateBanner(req, res) {
   );
 }
 
+async function updateProfile(req, res) {
+  const { fullName, bio } = req.body;
+
+  if (typeof fullName === "string") {
+    req.user.fullName = fullName.trim();
+  }
+
+  if (typeof bio === "string") {
+    req.user.bio = bio.trim();
+  }
+
+  await req.user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, "Profile updated successfully", {
+      user: {
+        _id: req.user._id,
+        fullName: req.user.fullName,
+        avatar: req.user.avatar,
+        bio: req.user.bio,
+        banner: req.user.banner,
+        socials: req.user.socials,
+        followerCount: req.user.followerCount,
+        followingCount: req.user.followingCount,
+      },
+    }),
+  );
+}
+
 async function followCreator(req, res) {
   const { creatorId } = req.body;
 
@@ -208,10 +244,9 @@ async function followCreator(req, res) {
   await user.save();
 
   eventBus.emit("notification:create", {
-    recipient: clip.creator,
+    recipient: creator._id,
     sender: req.user._id,
-    type: "like",
-    clip: clip._id,
+    type: "follow",
     senderName: req.user.fullName,
   });
 
@@ -228,6 +263,8 @@ module.exports = {
   updateAvatar,
 
   updateBanner,
+
+  updateProfile,
 
   followCreator,
 };

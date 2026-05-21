@@ -6,6 +6,7 @@ import { getErrorMessage } from "../../../utils/getErrorMessage";
 
 export function useLikeClip() {
   const queryClient = useQueryClient();
+  const addToast = useToastStore((state) => state.addToast);
 
   return useMutation({
     mutationFn: likeClip,
@@ -16,7 +17,6 @@ export function useLikeClip() {
       });
 
       const previousFeed = queryClient.getQueryData(["feed"]);
-      const addToast = useToastStore((state) => state.addToast);
 
       queryClient.setQueryData(
         ["feed"],
@@ -54,20 +54,12 @@ export function useLikeClip() {
     },
 
     onError: (err, clipId, context) => {
-      queryClient.setQueryData(["feed"], context.previousFeed);
+      queryClient.setQueryData(["feed"], context?.previousFeed);
 
       addToast({
         type: "error",
 
         message: getErrorMessage(err),
-      });
-    },
-
-    onSuccess: () => {
-      addToast({
-        type: "success",
-
-        message: "Clip liked",
       });
     },
 
