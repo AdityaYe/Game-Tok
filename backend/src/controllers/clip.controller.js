@@ -70,7 +70,15 @@ async function createClip(req, res) {
   const thumbnail = generateThumbnail(uploadResult.secure_url);
 
   const clip = await clipModel.create({
+    igdbId: req.body.igdbId,
+
+    gameSlug: req.body.gameSlug,
+
     gameName: req.body.gameName,
+
+    gameCover: req.body.gameCover,
+
+    gameRating: req.body.gameRating,
 
     thumbnail,
 
