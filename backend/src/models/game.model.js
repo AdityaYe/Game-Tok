@@ -2,10 +2,10 @@ const mongoose = require("mongoose");
 
 const gameSchema = new mongoose.Schema(
   {
-
     igdbId: {
       type: Number,
       unique: true,
+      sparse: true,
     },
 
     name: {
@@ -32,28 +32,14 @@ const gameSchema = new mongoose.Schema(
     website: {
       type: String,
     },
-
-    tags: [
-      {
-        type: String,
-      }
-    ],
-
-    gameCover: {
-        type: String,
-    },
-    
-    gameRating: {
-        type: Number,
-    },
-
   },
   {
     timestamps: true,
   }
 );
 
-const gameModel =
-  mongoose.model("game", gameSchema);
+gameSchema.index({ name: 1 });
+
+const gameModel = mongoose.model("game", gameSchema);
 
 module.exports = gameModel;

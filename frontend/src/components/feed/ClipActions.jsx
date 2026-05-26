@@ -6,12 +6,20 @@ import { useLikeClip } from "../../features/clips/hooks/useLikeClip";
 
 import { useSaveClip } from "../../features/clips/hooks/useSaveClip";
 
-const ClipActions = ({ clip, onOpenComments }) => {
+const ClipActions = ({
+  clip,
+  controlsVisible = false,
+  isLongVideo = false,
+  onInteract,
+  onOpenComments,
+}) => {
   const likeMutation = useLikeClip();
 
   const saveMutation = useSaveClip();
 
   const handleShare = async () => {
+    onInteract?.();
+
     const shareUrl = `${window.location.origin}/profile/${clip.creator?._id || ""}`;
 
     try {
@@ -31,11 +39,20 @@ const ClipActions = ({ clip, onOpenComments }) => {
   };
 
   return (
-    <div className="clip-actions">
+    <div
+      className={`clip-actions ${controlsVisible ? "is-controls-visible is-active" : "is-idle"} ${
+        isLongVideo ? "is-long-video" : ""
+      }`}
+      onMouseMove={() => onInteract?.()}
+      onTouchStart={() => onInteract?.()}
+    >
       <button
         className="clip-action"
         type="button"
-        onClick={() => likeMutation.mutate(clip._id)}
+        onClick={() => {
+          onInteract?.();
+          likeMutation.mutate(clip._id);
+        }}
         aria-label="Like clip"
       >
         <FaHeart />
@@ -46,7 +63,10 @@ const ClipActions = ({ clip, onOpenComments }) => {
       <button
         className="clip-action"
         type="button"
-        onClick={() => onOpenComments()}
+        onClick={() => {
+          onInteract?.();
+          onOpenComments();
+        }}
         aria-label="Open comments"
       >
         <FaComment />
@@ -57,7 +77,10 @@ const ClipActions = ({ clip, onOpenComments }) => {
       <button
         className="clip-action"
         type="button"
-        onClick={() => saveMutation.mutate(clip._id)}
+        onClick={() => {
+          onInteract?.();
+          saveMutation.mutate(clip._id);
+        }}
         aria-label="Save clip"
       >
         <FaBookmark />

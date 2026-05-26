@@ -37,10 +37,16 @@ export function useLikeClip() {
                   return clip;
                 }
 
+                const nextLiked =
+                  typeof clip.liked === "boolean" ? !clip.liked : true;
+                const countDelta = nextLiked ? 1 : -1;
+
                 return {
                   ...clip,
 
-                  likeCount: (clip.likeCount || 0) + 1,
+                  liked: nextLiked,
+
+                  likeCount: Math.max((clip.likeCount || 0) + countDelta, 0),
                 };
               }),
             })),
@@ -63,9 +69,42 @@ export function useLikeClip() {
       });
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["feed"],
+    onSuccess: (data, clipId, context) => {
+      const liked = data?.liked;
+
+      if (typeof liked !== "boolean") {
+        return;
+      }
+
+      const previousClip = context?.previousFeed?.pages
+        ?.flatMap((page) => page.clips || [])
+        .find((clip) => clip._id === clipId);
+
+      queryClient.setQueryData(["feed"], (oldData) => {
+        if (!oldData) {
+          return oldData;
+        }
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            clips: page.clips.map((clip) => {
+              if (clip._id !== clipId) {
+                return clip;
+              }
+
+              return {
+                ...clip,
+                liked,
+                likeCount:
+                  typeof previousClip?.likeCount === "number"
+                    ? Math.max(previousClip.likeCount + (liked ? 1 : -1), 0)
+                    : clip.likeCount,
+              };
+            }),
+          })),
+        };
       });
     },
   });

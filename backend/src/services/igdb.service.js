@@ -1,13 +1,11 @@
 const axios = require("axios");
 
 const gameModel = require("../models/game.model");
+const logger = require("../config/logger");
 
 const NodeCache = require("node-cache");
 
-if (
-  !process.env.TWITCH_CLIENT_ID ||
-  !process.env.TWITCH_CLIENT_SECRET
-) {
+if (!process.env.TWITCH_CLIENT_ID || !process.env.TWITCH_CLIENT_SECRET) {
   throw new Error("Missing Twitch environment variables");
 }
 
@@ -21,6 +19,7 @@ const igdbClient = axios.create({
 });
 
 let cachedToken = null;
+
 let tokenExpiry = 0;
 
 async function getAccessToken() {
@@ -30,23 +29,19 @@ async function getAccessToken() {
     return cachedToken;
   }
 
-  const response = await axios.post(
-    "https://id.twitch.tv/oauth2/token",
-    null,
-    {
-      params: {
-        client_id: process.env.TWITCH_CLIENT_ID,
-        client_secret: process.env.TWITCH_CLIENT_SECRET,
-        grant_type: "client_credentials",
-      },
-      timeout: 5000,
-    }
-  );
+  const response = await axios.post("https://id.twitch.tv/oauth2/token", null, {
+    params: {
+      client_id: process.env.TWITCH_CLIENT_ID,
+      client_secret: process.env.TWITCH_CLIENT_SECRET,
+      grant_type: "client_credentials",
+    },
+
+    timeout: 5000,
+  });
 
   cachedToken = response.data.access_token;
 
-  tokenExpiry =
-    now + response.data.expires_in * 1000;
+  tokenExpiry = now + response.data.expires_in * 1000;
 
   return cachedToken;
 }
@@ -55,9 +50,51 @@ function sanitizeQuery(query) {
   return query.replace(/"/g, "").trim();
 }
 
+function buildCoverUrl(imageId, size = "t_cover_small") {
+  if (!imageId) {
+    return "";
+  }
+
+  return `https://images.igdb.com/igdb/image/upload/${size}/${imageId}.webp`;
+}
+
+function formatGame(game) {
+  return {
+    igdbId: game.id ?? game.igdbId,
+    name: game.name,
+    slug: game.slug || "",
+    cover: game.cover?.image_id
+      ? buildCoverUrl(game.cover.image_id)
+      : game.cover || "",
+    genre: game.genres?.[0]?.name || game.genre || "",
+    rating: game.rating || 0,
+    website:
+      game.website ||
+      (game.slug ? `https://www.igdb.com/games/${game.slug}` : ""),
+  };
+}
+
+function dedupeGames(games) {
+  const seen = new Set();
+
+  return games.filter((game) => {
+    const key = game.igdbId || game.slug || game.name?.toLowerCase();
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 async function searchGames(query) {
-  const normalized =
-    sanitizeQuery(query).toLowerCase();
+  const normalized = sanitizeQuery(query).toLowerCase();
+
+  if (!normalized) {
+    return [];
+  }
 
   const cacheKey = `games:${normalized}`;
 
@@ -84,10 +121,10 @@ async function searchGames(query) {
         $options: "i",
       },
     })
-    .limit(8)
+    .limit(3)
     .lean();
 
-  if (existingGames.length > 0) {
+  if (existingGames.length >= 3) {
     logger.info("MONGO CACHE HIT");
 
     cache.set(cacheKey, existingGames);
@@ -108,59 +145,56 @@ async function searchGames(query) {
     `
     search "${normalized}";
     
-    fields
+      fields
       id,
       name,
       slug,
-      rating;
+      rating,
+      genres.name,
+      cover.image_id;
 
-    limit 8;
+    limit 3;
     `,
     {
       headers: {
-        "Client-ID":
-          process.env.TWITCH_CLIENT_ID,
+        "Client-ID": process.env.TWITCH_CLIENT_ID,
 
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
-  const formattedGames = response.data.map(
-    (game) => ({
-      igdbId: game.id,
+  const formattedGames = response.data.map(formatGame);
+  const games = dedupeGames([...existingGames, ...formattedGames]).slice(0, 3);
 
-      name: game.name,
+  cache.set(cacheKey, games);
 
-      slug: game.slug,
+  return games;
+}
 
-      rating: game.rating || 0,
-
-      website: `https://www.igdb.com/games/${game.slug}`,
-    })
-  );
-
-  if (formattedGames.length > 0) {
-    try {
-      await gameModel.insertMany(
-        formattedGames,
-        {
-          ordered: false,
-        }
-      );
-    } catch (err) {
-      logger.error(
-        "Failed to cache games:",
-        err.message
-      );
-    }
+async function saveSelectedGame(game) {
+  if (!game?.igdbId || !game?.name) {
+    return null;
   }
 
-  cache.set(cacheKey, formattedGames);
+  const selectedGame = formatGame(game);
 
-  return formattedGames;
+  return gameModel.findOneAndUpdate(
+    {
+      igdbId: selectedGame.igdbId,
+    },
+    {
+      $set: selectedGame,
+    },
+    {
+      new: true,
+      setDefaultsOnInsert: true,
+      upsert: true,
+    },
+  );
 }
 
 module.exports = {
   searchGames,
+  saveSelectedGame,
 };

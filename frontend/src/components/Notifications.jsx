@@ -1,14 +1,21 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 
 import "../styles/notifications.css";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNotifications } from "../features/notifications/hooks/useNotifications";
+import {
+  useMarkNotificationsRead,
+  useNotifications,
+} from "../features/notifications/hooks/useNotifications";
 import { useNotificationsSocket } from "../features/notifications/hooks/useNotificationsSocket";
 import { optimizeImage } from "../utils/cloudinary";
 
 const Notifications = () => {
   const queryClient = useQueryClient();
   const { data, isLoading: loading } = useNotifications();
+  const {
+    isPending: isMarkingRead,
+    mutate: markNotificationsRead,
+  } = useMarkNotificationsRead();
   const notifications = data?.notifications || [];
 
   const handleNotification = useCallback(() => {
@@ -16,6 +23,12 @@ const Notifications = () => {
   }, [queryClient]);
 
   useNotificationsSocket(handleNotification);
+
+  useEffect(() => {
+    if ((data?.unreadCount || 0) > 0 && !isMarkingRead) {
+      markNotificationsRead();
+    }
+  }, [data?.unreadCount, isMarkingRead, markNotificationsRead]);
 
   function getNotificationText(notification) {
     switch (notification.type) {

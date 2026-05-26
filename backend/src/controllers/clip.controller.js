@@ -11,6 +11,7 @@ const {
   uploadClipVideo,
   generateThumbnail,
 } = require("../services/storage.service");
+const { saveSelectedGame } = require("../services/igdb.service");
 
 const eventBus = require("../events/eventBus");
 
@@ -68,17 +69,16 @@ async function createClip(req, res) {
   const uploadResult = await uploadClipVideo(req.file.buffer);
 
   const thumbnail = generateThumbnail(uploadResult.secure_url);
+  const igdbId = req.body.igdbId || req.body.gameAppId;
 
   const clip = await clipModel.create({
-    igdbId: req.body.igdbId,
+    igdbId,
 
     gameSlug: req.body.gameSlug,
 
     gameName: req.body.gameName,
 
     gameCover: req.body.gameCover,
-
-    gameRating: req.body.gameRating,
 
     thumbnail,
 
@@ -88,6 +88,8 @@ async function createClip(req, res) {
 
     gameUrl: req.body.gameUrl,
 
+    gameAppId: igdbId,
+
     video: uploadResult.secure_url,
 
     creator: req.user._id,
@@ -96,6 +98,18 @@ async function createClip(req, res) {
 
     tags: Array.isArray(req.body.tags) ? req.body.tags : [],
   });
+
+  if (igdbId) {
+    await saveSelectedGame({
+      igdbId,
+      name: req.body.gameName,
+      slug: req.body.gameSlug,
+      cover: req.body.gameCover,
+      genre: req.body.genre,
+      rating: req.body.rating,
+      website: req.body.gameUrl,
+    });
+  }
 
   return res.status(201).json(
     new ApiResponse(201, "Clip uploaded successfully", {
@@ -117,6 +131,10 @@ async function getClips(req, res) {
     .select(
       `
         gameName
+        gameCover
+        gameUrl
+        gameAppId
+        igdbId
         thumbnail
         video
         description
@@ -204,6 +222,10 @@ async function searchClips(req, res) {
     .select(
       `
         gameName
+        gameCover
+        gameUrl
+        gameAppId
+        igdbId
         thumbnail
         video
         description
@@ -357,7 +379,20 @@ async function deleteComment(req, res) {
     throw new ApiError(404, "Comment not found");
   }
 
-  if (comment.user.toString() !== req.user._id.toString()) {
+  if (comment.isDeleted) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  const clip = await clipModel.findById(comment.clip).select("creator");
+
+  if (!clip) {
+    throw new ApiError(404, "Clip not found");
+  }
+
+  const isCommentOwner = comment.user.toString() === req.user._id.toString();
+  const isClipCreator = clip.creator.toString() === req.user._id.toString();
+
+  if (!isCommentOwner && !isClipCreator) {
     throw new ApiError(403, "Unauthorized");
   }
 

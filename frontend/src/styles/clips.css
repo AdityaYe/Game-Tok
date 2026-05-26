@@ -59,17 +59,10 @@
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
-  cursor: grab;
 }
 
 .clip-feed-viewport > div::-webkit-scrollbar {
   display: none;
-}
-
-.clip-feed-viewport > div.is-dragging {
-  cursor: grabbing;
-  scroll-behavior: auto;
-  user-select: none;
 }
 
 .clip-feed-viewport > div > div > div {
@@ -136,6 +129,29 @@
     #000;
 }
 
+.clip-card.is-active,
+.clip-card.is-controls-visible {
+  --clip-control-opacity: 1;
+  --clip-control-scale: 1;
+  --clip-control-bg: rgba(9, 13, 18, 0.48);
+  --clip-control-border: rgba(255, 255, 255, 0.2);
+  --clip-control-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+}
+
+.clip-card.is-idle {
+  --clip-control-opacity: 0.54;
+  --clip-control-scale: 0.97;
+  --clip-control-bg: rgba(8, 11, 16, 0.28);
+  --clip-control-border: rgba(255, 255, 255, 0.1);
+  --clip-control-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.clip-card.is-long-video.is-idle {
+  --clip-control-opacity: 0.36;
+  --clip-control-bg: rgba(8, 11, 16, 0.2);
+  --clip-control-border: rgba(255, 255, 255, 0.08);
+}
+
 .video-wrapper {
   position: absolute;
   inset: 0;
@@ -180,42 +196,150 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 3;
+  z-index: 7;
   display: inline-flex;
   align-items: center;
   gap: 14px;
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.96);
+  transform: translate(-50%, -50%) scale(0.92);
   pointer-events: none;
   transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+    opacity 220ms ease,
+    transform 220ms ease;
 }
 
 .video-center-controls.is-visible {
-  opacity: 1;
+  opacity: var(--clip-control-opacity, 1);
   transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
 
 .video-control-button {
-  width: 58px;
-  height: 58px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--clip-control-border, rgba(255, 255, 255, 0.2));
   border-radius: 50%;
   color: #fff;
-  background: rgba(0, 0, 0, 0.52);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(14px);
+  background: var(--clip-control-bg, rgba(9, 13, 18, 0.48));
+  box-shadow: var(--clip-control-shadow, 0 14px 34px rgba(0, 0, 0, 0.34));
+  backdrop-filter: blur(18px) saturate(135%);
   cursor: pointer;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    background 220ms ease,
+    border-color 220ms ease,
+    backdrop-filter 220ms ease;
 }
 
 .video-control-button--play {
-  width: 74px;
-  height: 74px;
   font-size: 22px;
+}
+
+.video-control-button:hover {
+  transform: scale(1.04);
+}
+
+.video-control-button:active {
+  transform: scale(0.96);
+}
+
+.video-mute-button {
+  position: absolute;
+  top: calc(var(--top-bar-height) + env(safe-area-inset-top, 0px) + 14px);
+  right: var(--clip-side-gutter);
+  z-index: 9;
+
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--clip-control-border, rgba(255, 255, 255, 0.12));
+  border-radius: 50%;
+
+  color: rgba(255, 255, 255, 0.94);
+  background: var(--clip-control-bg, rgba(9, 13, 18, 0.34));
+  box-shadow: var(--clip-control-shadow, 0 10px 28px rgba(0, 0, 0, 0.24));
+  backdrop-filter: blur(18px) saturate(135%);
+
+  opacity: 0.46;
+  transform: scale(0.96);
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  transition:
+    opacity 260ms ease,
+    transform 220ms ease,
+    background 260ms ease,
+    border-color 260ms ease,
+    backdrop-filter 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.clip-card.is-controls-visible .video-mute-button,
+.clip-card.is-active .video-mute-button,
+.video-mute-button:hover {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clip-card.is-idle .video-mute-button {
+  opacity: max(var(--clip-control-opacity, 0.46), 0.34);
+}
+
+.video-mute-button:hover {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.video-mute-button:active {
+  transform: scale(0.94);
+}
+
+.clip-heart-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 10;
+
+  display: grid;
+  place-items: center;
+
+  color: #ff3b6b;
+  font-size: clamp(78px, 22vw, 132px);
+
+  pointer-events: none;
+  filter: drop-shadow(0 18px 34px rgba(255, 59, 107, 0.24));
+
+  animation: clipHeartBurst 780ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes clipHeartBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.42);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  42% {
+    opacity: 0.94;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -56%) scale(1.36);
+  }
 }
 
 /* =========================
@@ -263,20 +387,13 @@
 
 .clip-content {
   position: relative;
-
   z-index: 2;
-
   width: 100%;
-
   display: flex;
   flex-direction: column;
-
   gap: var(--space-4);
-
   padding: 28px 20px calc(env(safe-area-inset-bottom, 0px) + 86px);
-
   padding-right: 92px;
-
   pointer-events: auto;
 }
 
@@ -286,20 +403,13 @@
 
 .clip-bottom-meta {
   position: absolute;
-
   left: var(--clip-side-gutter);
-
   right: calc(var(--clip-action-size) + var(--clip-side-gutter) + 88px);
-
   bottom: var(--clip-meta-bottom-offset);
-
   z-index: 6;
-
   display: flex;
   flex-direction: column;
-
   gap: 10px;
-
   pointer-events: auto;
 }
 
@@ -345,24 +455,69 @@
   gap: 2px;
 }
 
+.clip-creator-name-row {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .clip-creator-name {
   margin: 0;
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
   color: #fff;
   font-size: 0.98rem;
   font-weight: 850;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
 }
 
-.clip-game-name {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 850;
+.clip-inline-follow {
+  flex: 0 0 auto;
 
-  color: #fff;
+  border: 1px solid rgba(32, 246, 199, 0.38);
+  border-radius: 999px;
 
-  letter-spacing: -0.01em;
+  padding: 5px 9px;
 
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  color: #00130f;
+  background: rgba(32, 246, 199, 0.92);
+  box-shadow: 0 0 18px rgba(32, 246, 199, 0.18);
+
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.clip-inline-follow.is-following {
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+.clip-inline-follow:active {
+  transform: scale(0.94);
+}
+
+.clip-inline-follow:disabled {
+  opacity: 0.64;
+  cursor: not-allowed;
 }
 
 /* =========================
@@ -410,35 +565,17 @@
   cursor: pointer;
 }
 
-.clip-expanded-meta {
-  max-height: 0;
-  overflow: hidden;
-
-  opacity: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  transition:
-    max-height 240ms ease,
-    opacity 240ms ease;
-}
-
-.clip-expanded-meta.expanded {
-  max-height: 220px;
-  opacity: 1;
-}
-
 .clip-tags {
+  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  max-width: 100%;
-  color: rgba(255, 255, 255, 0.94);
+  gap: 10px;
+}
+
+.clip-tags span {
+  color: rgba(255,255,255,0.58);
   font-size: 0.88rem;
-  font-weight: 750;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.58);
+  font-weight: 600;
 }
 
 /* =========================
@@ -454,6 +591,60 @@
   color: rgba(255, 255, 255, 0.8);
 
   font-size: 0.82rem;
+}
+
+.clip-inline-game {
+  display: flex;
+  align-items: center;
+  gap:6px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.clip-inline-game-name {
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.58);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.clip-game-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.clip-game-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clip-game-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.clip-game-cover {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.clip-game-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
 }
 
 .clip-overlay-frame {
@@ -535,6 +726,28 @@
   gap: 12px;
 
   pointer-events: auto;
+
+  opacity: var(--clip-control-opacity, 0.54);
+  transform: scale(var(--clip-control-scale, 0.97));
+  transform-origin: right bottom;
+
+  transition:
+    opacity 260ms ease,
+    transform 240ms ease;
+}
+
+.clip-actions.is-controls-visible,
+.clip-actions.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clip-actions.is-idle {
+  opacity: var(--clip-control-opacity, 0.54);
+}
+
+.clip-actions.is-long-video.is-idle {
+  opacity: 0.36;
 }
 
 .clip-follow-btn {
@@ -561,153 +774,407 @@
    COMMENT
 ========================= */
 
-.comments-sheet {
+.comments-overlay {
   position: fixed;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  height: 70vh;
-
-  background: var(--color-surface);
-
-  border-top-left-radius: 24px;
-
-  border-top-right-radius: 24px;
-
-  z-index: 999;
+  inset: 0;
+  z-index: 80;
 
   display: flex;
+  align-items: flex-end;
+  justify-content: center;
 
-  flex-direction: column;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.28) 100%),
+    rgba(0, 0, 0, 0.18);
 
-  animation: slideUp 220ms ease;
+  pointer-events: auto;
 }
 
-.comments-sheet-header {
-  padding: 20px;
+.comments-panel {
+  width: 100%;
+  height: min(74dvh, 680px);
+
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 0;
+  border-radius: 26px 26px 0 0;
+
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(22, 25, 32, 0.94), rgba(9, 12, 17, 0.96)),
+    rgba(12, 14, 20, 0.92);
+  box-shadow: 0 -26px 64px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(24px) saturate(135%);
+
+  animation: commentsSlideUp 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.comments-header {
+  position: relative;
 
   display: flex;
-
-  justify-content: space-between;
-
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 
-  border-bottom: 1px solid var(--color-border);
+  padding: 18px 18px 14px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.comments-handle {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+
+  width: 42px;
+  height: 4px;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+
+  transform: translateX(-50%);
+}
+
+.comments-title-group {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.comments-title-group h2 {
+  margin: 0;
+
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.comments-title-group span {
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.comments-close {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+
+  cursor: pointer;
+
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.comments-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.comments-close:active {
+  transform: scale(0.94);
 }
 
 .comments-list {
-  flex: 1;
-
-  overflow-y: auto;
-
-  padding: 20px;
+  min-height: 0;
 
   display: flex;
-
   flex-direction: column;
+  gap: 18px;
 
-  gap: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding: 18px;
+
+  scroll-behavior: smooth;
+}
+
+.comments-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .comment-item {
-  display: flex;
-
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
   gap: 12px;
 }
 
 .comment-avatar {
   width: 40px;
-
   height: 40px;
 
-  border-radius: 50%;
+  display: grid;
+  place-items: center;
 
   overflow: hidden;
 
-  background: var(--color-surface-alt);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
 
-  display: grid;
+  background:
+    linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
 
-  place-items: center;
-
+  object-fit: cover;
   flex-shrink: 0;
 }
 
-.comment-avatar img {
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
+.comment-avatar-placeholder {
+  color: #04130f;
+  font-weight: 900;
 }
 
-.comment-content p {
-  margin-top: 4px;
+.comment-body {
+  min-width: 0;
 
-  color: var(--color-text-secondary);
+  display: grid;
+  gap: 5px;
 }
 
-.comment-input-row {
+.comment-meta-row {
+  min-width: 0;
+
   display: flex;
-
-  gap: 12px;
-
-  padding: 20px;
-
-  border-top: 1px solid var(--color-border);
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.comment-input-row input {
-  flex: 1;
+.comment-user strong {
+  color: rgba(255, 255, 255, 0.94);
 
-  border: 1px solid var(--color-border);
-
-  background: var(--color-surface-alt);
-
-  border-radius: 999px;
-
-  padding: 12px 16px;
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
-.comment-input-row button {
-  border: none;
+.comment-delete-button {
+  width: 28px;
+  height: 28px;
 
-  padding: 12px 18px;
+  display: grid;
+  place-items: center;
 
-  border-radius: 999px;
+  border: 0;
+  border-radius: 50%;
 
-  background: var(--color-accent);
-
-  color: white;
-
-  font-weight: 600;
-}
-
-.comment-delete-btn {
-  margin-top: 6px;
-
-  border: none;
-
+  color: rgba(255, 255, 255, 0.46);
   background: transparent;
-
-  color: var(--color-danger);
-
-  font-size: 13px;
 
   cursor: pointer;
 
-  padding: 0;
+  opacity: 0.7;
+
+  transition:
+    opacity 180ms ease,
+    color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
 }
 
-@keyframes slideUp {
+.comment-delete-button svg {
+  width: 12px;
+  height: 12px;
+}
+
+.comment-delete-button:hover {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.comment-delete-button:active {
+  transform: scale(0.92);
+}
+
+.comment-delete-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.comment-text {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.76);
+
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.comments-state,
+.comments-empty {
+  min-height: 220px;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+
+  text-align: center;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.comments-empty strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.comments-empty span {
+  font-size: 0.9rem;
+}
+
+.comments-form {
+  position: sticky;
+  bottom: 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+
+  padding:
+    14px
+    16px
+    calc(14px + env(safe-area-inset-bottom, 0px));
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  background:
+    linear-gradient(180deg, rgba(12, 14, 20, 0.76), rgba(8, 10, 15, 0.96));
+  backdrop-filter: blur(20px) saturate(135%);
+}
+
+.comments-form input {
+  min-width: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+
+  padding: 12px 14px;
+
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+
+  font: inherit;
+  outline: none;
+
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.comments-form input:focus {
+  border-color: rgba(32, 246, 199, 0.48);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(32, 246, 199, 0.12);
+}
+
+.comments-form button {
+  border: 0;
+  border-radius: 999px;
+
+  padding: 0 16px;
+
+  color: #031310;
+  background: var(--color-accent);
+
+  font: inherit;
+  font-weight: 850;
+
+  cursor: pointer;
+
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.comments-form button:hover {
+  background: var(--color-accent-hover);
+}
+
+.comments-form button:active {
+  transform: scale(0.96);
+}
+
+.comments-form button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+@keyframes commentsSlideUp {
   from {
-    transform: translateY(100%);
+    opacity: 0;
+    transform: translateY(22px);
   }
 
   to {
+    opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes commentsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 860px) {
+  .comments-overlay {
+    align-items: stretch;
+    justify-content: flex-end;
+
+    padding:
+      calc(var(--top-bar-height) + 16px)
+      18px
+      calc(var(--bottom-nav-height) + 18px);
+
+    background: transparent;
+  }
+
+  .comments-panel {
+    width: min(420px, 34vw);
+    height: auto;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+
+    box-shadow: -24px 26px 72px rgba(0, 0, 0, 0.36);
+
+    animation: commentsSlideIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .comments-handle {
+    display: none;
   }
 }
 
@@ -739,21 +1206,24 @@
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--clip-control-border, rgba(255, 255, 255, 0.16));
   border-radius: 999px;
 
-  background: rgba(0, 0, 0, 0.42);
+  background: var(--clip-control-bg, rgba(0, 0, 0, 0.42));
 
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px) saturate(135%);
 
   color: #fff;
 
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+  box-shadow: var(--clip-control-shadow, 0 10px 30px rgba(0, 0, 0, 0.34));
 
   transition:
+    opacity 260ms ease,
     transform 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease;
+    background 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease,
+    backdrop-filter 260ms ease;
 }
 
 .clip-action svg {
@@ -770,12 +1240,22 @@
 
 .clip-action:hover {
   border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.16);
   transform: translateY(-1px);
 }
 
 .clip-action:active {
   transform: scale(0.95);
+}
+
+.clip-card.is-long-video.is-idle .clip-action {
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.clip-card.is-long-video.is-controls-visible .clip-action,
+.clip-card.is-long-video.is-active .clip-action {
+  color: #fff;
 }
 
 /* =========================

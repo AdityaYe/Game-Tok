@@ -1,10 +1,28 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FixedSizeList } from "react-window";
 
 import { InfiniteLoader } from "react-window-infinite-loader";
 
 import ClipCard from "./ClipCard";
+
+const FeedRow = ({ data, index, style }) => {
+  if (!data.isItemLoaded(index)) {
+    return <div style={style}>Loading more clips...</div>;
+  }
+
+  const clip = data.items[index];
+
+  if (!clip) {
+    return null;
+  }
+
+  return (
+    <div style={style}>
+      <ClipCard clip={clip} />
+    </div>
+  );
+};
 
 const ClipFeed = ({
   items = [],
@@ -18,11 +36,6 @@ const ClipFeed = ({
   const currentIndexRef = useRef(0);
   const wheelLockRef = useRef(false);
   const snapTimeoutRef = useRef(null);
-  const dragRef = useRef({
-    active: false,
-    startY: 0,
-    scrollTop: 0,
-  });
   const [height, setHeight] = useState(720);
 
   useEffect(() => {
@@ -46,7 +59,19 @@ const ClipFeed = ({
 
   const itemCount = hasMore ? items.length + 1 : items.length;
 
-  const isItemLoaded = (index) => index < items.length;
+  const isItemLoaded = useCallback((index) => index < items.length, [items.length]);
+  const itemData = useMemo(
+    () => ({
+      isItemLoaded,
+      items,
+    }),
+    [isItemLoaded, items],
+  );
+
+  const getItemKey = useCallback(
+    (index, data) => data.items[index]?._id || `loader-${index}`,
+    [],
+  );
 
   const scrollToIndex = useCallback(
     (nextIndex, behavior = "smooth") => {
@@ -102,59 +127,12 @@ const ClipFeed = ({
       }, 360);
     };
 
-    const handlePointerDown = (event) => {
-      if (event.pointerType === "mouse" && event.button !== 0) {
-        return;
-      }
-
-      if (event.target.closest("button, a, input, textarea, select")) {
-        return;
-      }
-
-      dragRef.current = {
-        active: true,
-        startY: event.clientY,
-        scrollTop: scroller.scrollTop,
-      };
-      scroller.classList.add("is-dragging");
-      scroller.setPointerCapture?.(event.pointerId);
-    };
-
-    const handlePointerMove = (event) => {
-      if (!dragRef.current.active) {
-        return;
-      }
-
-      event.preventDefault();
-      const deltaY = event.clientY - dragRef.current.startY;
-      scroller.scrollTop = dragRef.current.scrollTop - deltaY;
-    };
-
-    const endDrag = (event) => {
-      if (!dragRef.current.active) {
-        return;
-      }
-
-      dragRef.current.active = false;
-      scroller.classList.remove("is-dragging");
-      scroller.releasePointerCapture?.(event.pointerId);
-      snapToNearest();
-    };
-
     scroller.addEventListener("wheel", handleWheel, { passive: false });
-    scroller.addEventListener("pointerdown", handlePointerDown);
-    scroller.addEventListener("pointermove", handlePointerMove);
-    scroller.addEventListener("pointerup", endDrag);
-    scroller.addEventListener("pointercancel", endDrag);
 
     return () => {
       scroller.removeEventListener("wheel", handleWheel);
-      scroller.removeEventListener("pointerdown", handlePointerDown);
-      scroller.removeEventListener("pointermove", handlePointerMove);
-      scroller.removeEventListener("pointerup", endDrag);
-      scroller.removeEventListener("pointercancel", endDrag);
     };
-  }, [scrollToIndex, snapToNearest]);
+  }, [scrollToIndex]);
 
   useEffect(() => {
     scrollToIndex(currentIndexRef.current, "auto");
@@ -165,24 +143,6 @@ const ClipFeed = ({
       window.clearTimeout(snapTimeoutRef.current);
     };
   }, []);
-
-  const Row = ({ index, style }) => {
-    if (!isItemLoaded(index)) {
-      return <div style={style}>Loading more clips...</div>;
-    }
-
-    const clip = items[index];
-
-    if (!clip) {
-      return null;
-    }
-
-    return (
-      <div style={style}>
-        <ClipCard clip={clip} />
-      </div>
-    );
-  };
 
   return (
     <div className="clip-feed-viewport" ref={viewportRef}>
@@ -203,6 +163,8 @@ const ClipFeed = ({
           return (
           <FixedSizeList
             height={height}
+            itemData={itemData}
+            itemKey={getItemKey}
             itemCount={itemCount}
             itemSize={height}
             onItemsRendered={onItemsRendered}
@@ -216,7 +178,7 @@ const ClipFeed = ({
             ref={setListRef}
             width="100%"
           >
-            {Row}
+            {FeedRow}
           </FixedSizeList>
           );
         }}

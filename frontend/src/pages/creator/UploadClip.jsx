@@ -20,6 +20,8 @@ const UploadClip = () => {
 
   const [showDropdown, setShowDropdown] = useState(false);
 
+  const [isSearchingGames, setIsSearchingGames] = useState(false);
+
   const [videoFile, setVideoFile] = useState(null);
 
   const [videoURL, setVideoURL] = useState("");
@@ -63,7 +65,12 @@ const UploadClip = () => {
   ========================= */
 
   useEffect(() => {
-    if (gameSearch.length < 2) {
+    const trimmedSearch = gameSearch.trim();
+
+    if (
+      selectedGame &&
+      trimmedSearch.toLowerCase() === selectedGame.name.toLowerCase()
+    ) {
       setGameResults([]);
 
       setShowDropdown(false);
@@ -71,24 +78,46 @@ const UploadClip = () => {
       return;
     }
 
+    if (trimmedSearch.length < 2) {
+      setGameResults([]);
+
+      setShowDropdown(false);
+
+      return;
+    }
+
+    const controller = new AbortController();
+
     const timeout = setTimeout(
       async () => {
         try {
-          const response = await searchGames(gameSearch);
+          setIsSearchingGames(true);
 
-          setGameResults(response.games || []);
+          const response = await searchGames(trimmedSearch, {
+            signal: controller.signal,
+          });
+
+          setGameResults((response.games || []).slice(0, 3));
 
           setShowDropdown(true);
         } catch (err) {
-          console.log(err);
+          if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED") {
+            console.log(err);
+          }
+        } finally {
+          setIsSearchingGames(false);
         }
       },
 
-      400,
+      250,
     );
 
-    return () => clearTimeout(timeout);
-  }, [gameSearch]);
+    return () => {
+      controller.abort();
+
+      clearTimeout(timeout);
+    };
+  }, [gameSearch, selectedGame]);
 
   /* =========================
      FILE CHANGE
@@ -159,6 +188,8 @@ const UploadClip = () => {
 
     setGameSearch(game.name);
 
+    setGameResults([]);
+
     setShowDropdown(false);
   };
 
@@ -180,11 +211,17 @@ const UploadClip = () => {
 
     formData.append("gameCover", selectedGame?.cover || "");
 
+    formData.append("igdbId", selectedGame?.igdbId || "");
+
+    formData.append("gameAppId", selectedGame?.igdbId || "");
+
+    formData.append("gameSlug", selectedGame?.slug || "");
+
     formData.append("genre", selectedGame?.genre || "");
 
     formData.append("gameUrl", selectedGame?.website || "");
 
-    formData.append("gameRating", selectedGame?.rating || 0);
+    formData.append("rating", selectedGame?.rating || 0);
 
     formData.append(
       "tags",
@@ -211,8 +248,8 @@ const UploadClip = () => {
   ========================= */
 
   const isDisabled = useMemo(() => {
-    return !gameName.trim() || !videoFile || isPending;
-  }, [gameName, videoFile, isPending]);
+    return !selectedGame || !gameName.trim() || !videoFile || isPending;
+  }, [selectedGame, gameName, videoFile, isPending]);
 
   return (
     <div
@@ -358,19 +395,32 @@ const UploadClip = () => {
               "
               value={gameSearch}
               onChange={(e) => {
-                setGameSearch(e.target.value);
+                const nextValue = e.target.value;
 
-                setGameName(e.target.value);
+                setGameSearch(nextValue);
+
+                setGameName(nextValue);
+
+                setSelectedGame(null);
+              }}
+              onFocus={() => {
+                if (gameResults.length > 0) {
+                  setShowDropdown(true);
+                }
               }}
               required
             />
 
-            {showDropdown && gameResults.length > 0 && (
+            {showDropdown && (gameResults.length > 0 || isSearchingGames) && (
               <div
                 className="
                 game-search-dropdown
               "
               >
+                {isSearchingGames && gameResults.length === 0 && (
+                  <div className="game-search-state">Searching...</div>
+                )}
+
                 {gameResults.map((game) => (
                   <button
                     type="button"
@@ -380,7 +430,15 @@ const UploadClip = () => {
                     "
                     onClick={() => selectGame(game)}
                   >
-                    {game.name}
+                    <span className="game-search-cover">
+                      {game.cover ? (
+                        <img src={game.cover} alt="" loading="lazy" />
+                      ) : (
+                        <span>{game.name?.[0] || "G"}</span>
+                      )}
+                    </span>
+
+                    <span className="game-search-name">{game.name}</span>
                   </button>
                 ))}
               </div>

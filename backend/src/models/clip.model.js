@@ -9,6 +9,20 @@ const clipSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
+    igdbId: {
+      type: Number
+    },
+
+    gameSlug: {
+      type:  String,
+      default: ""
+    },
+
+    gameCover: {
+      type: String,
+      default: ""
+    },
+
     video: {
       type: String,
       required: true,

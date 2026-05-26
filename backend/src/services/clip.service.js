@@ -2,11 +2,7 @@ const clipModel = require("../models/clip.model");
 
 const likeModel = require("../models/like.model");
 
-const saveModel = require("../models/save.model");
-
 const commentModel = require("../models/comment.model");
-
-const ApiError = require("../utils/ApiError");
 
 async function getFeed({ page = 1, limit = 10 }) {
   const skip = (page - 1) * limit;
@@ -14,7 +10,11 @@ async function getFeed({ page = 1, limit = 10 }) {
   const clips = await clipModel
     .find({isDeleted: {$ne: true,},})
     
-    .select(`gameName 
+    .select(`gameName
+        gameCover
+        gameUrl
+        gameAppId
+        igdbId
         thumbnail
         video
         creator

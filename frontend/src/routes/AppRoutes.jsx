@@ -153,8 +153,10 @@ const AppRoutes = () => {
             path="/saved"
             element={
               <ProtectedRoute>
-                <AppShell>
-                  <Saved />
+                <AppShell variant="feed">
+                  <FeedLayout>
+                    <Saved />
+                  </FeedLayout>
                 </AppShell>
               </ProtectedRoute>
             }

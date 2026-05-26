@@ -42,9 +42,16 @@ async function getNotifications(req, res) {
     recipient: req.user._id,
   });
 
+  const unreadCount = await notificationModel.countDocuments({
+    recipient: req.user._id,
+    isRead: false,
+  });
+
   return res.status(200).json(
     new ApiResponse(200, "Notifications fetched successfully", {
       notifications,
+
+      unreadCount,
 
       pagination: {
         page,
@@ -59,6 +66,25 @@ async function getNotifications(req, res) {
   );
 }
 
+async function markNotificationsRead(req, res) {
+  await notificationModel.updateMany(
+    {
+      recipient: req.user._id,
+      isRead: false,
+    },
+    {
+      $set: {
+        isRead: true,
+      },
+    },
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Notifications marked as read"));
+}
+
 module.exports = {
   getNotifications,
+  markNotificationsRead,
 };

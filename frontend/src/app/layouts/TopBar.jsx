@@ -1,10 +1,29 @@
 import { Link, useNavigate } from "react-router-dom";
 import { FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
+import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/authStore";
+import { useNotifications } from "../../features/notifications/hooks/useNotifications";
+import { useNotificationsSocket } from "../../features/notifications/hooks/useNotificationsSocket";
 
 const TopBar = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const { data: notificationsData } = useNotifications({
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  const unreadCount = notificationsData?.unreadCount || 0;
+  const badgeLabel = unreadCount > 99 ? "99+" : unreadCount > 9 ? "9+" : unreadCount;
+
+  const handleNotification = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["notifications"],
+    });
+  }, [queryClient]);
+
+  useNotificationsSocket(handleNotification);
 
   return (
     <header className="top-bar">
@@ -27,11 +46,17 @@ const TopBar = () => {
           <>
             <button
               type="button"
-              className="top-bar__icon-btn"
+              className="top-bar__icon-btn top-bar__notification-btn"
               aria-label="Notifications"
               onClick={() => navigate("/notifications")}
             >
               <FaBell />
+
+              {unreadCount > 0 && (
+                <span className="top-bar__notification-badge">
+                  {badgeLabel}
+                </span>
+              )}
             </button>
 
             <button

@@ -34,10 +34,16 @@ export function useSaveClip() {
                   return clip;
                 }
 
+                const nextSaved =
+                  typeof clip.saved === "boolean" ? !clip.saved : true;
+                const countDelta = nextSaved ? 1 : -1;
+
                 return {
                   ...clip,
 
-                  savesCount: (clip.savesCount || 0) + 1,
+                  saved: nextSaved,
+
+                  savesCount: Math.max((clip.savesCount || 0) + countDelta, 0),
                 };
               }),
             })),
@@ -51,12 +57,45 @@ export function useSaveClip() {
     },
 
     onError: (err, clipId, context) => {
-      queryClient.setQueryData(["feed"], context.previousFeed);
+      queryClient.setQueryData(["feed"], context?.previousFeed);
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["feed"],
+    onSuccess: (data, clipId, context) => {
+      const saved = data?.saved;
+
+      if (typeof saved !== "boolean") {
+        return;
+      }
+
+      const previousClip = context?.previousFeed?.pages
+        ?.flatMap((page) => page.clips || [])
+        .find((clip) => clip._id === clipId);
+
+      queryClient.setQueryData(["feed"], (oldData) => {
+        if (!oldData) {
+          return oldData;
+        }
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            clips: page.clips.map((clip) => {
+              if (clip._id !== clipId) {
+                return clip;
+              }
+
+              return {
+                ...clip,
+                saved,
+                savesCount:
+                  typeof previousClip?.savesCount === "number"
+                    ? Math.max(previousClip.savesCount + (saved ? 1 : -1), 0)
+                    : clip.savesCount,
+              };
+            }),
+          })),
+        };
       });
     },
   });
