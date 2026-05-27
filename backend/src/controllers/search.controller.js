@@ -23,6 +23,9 @@ function buildClipSearchFilter(query) {
       {
         tags: queryRegex,
       },
+      {
+        description: queryRegex,
+      },
     ],
   };
 }
@@ -88,10 +91,11 @@ async function searchAll(req, res) {
         fullName
         avatar
         isVerified
+        followerCount
       `,
     )
 
-    .limit(5)
+    .limit(12)
 
     .lean();
 
@@ -108,6 +112,7 @@ async function searchAll(req, res) {
         video
         description
         tags
+        gameCover
         creator
         likeCount
         commentCount
@@ -130,7 +135,7 @@ async function searchAll(req, res) {
       createdAt: -1,
     })
 
-    .limit(5)
+    .limit(30)
 
     .lean();
 

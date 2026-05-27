@@ -11,14 +11,13 @@ import "../../styles/clips.css";
 const ProfileClipFeed = () => {
   const { clipId } = useParams();
   const location = useLocation();
-  const stateClips = location.state?.clips || [];
+  const stateClips = useMemo(() => location.state?.clips || [], [location.state]);
   const { data, isLoading } = useCreatorDashboard({
     enabled: stateClips.length === 0,
   });
 
-  const clips = stateClips.length > 0 ? stateClips : data?.clips || [];
-
   const orderedClips = useMemo(() => {
+    const clips = stateClips.length > 0 ? stateClips : data?.clips || [];
     const selectedIndex = clips.findIndex((clip) => clip._id === clipId);
 
     if (selectedIndex <= 0) {
@@ -26,7 +25,7 @@ const ProfileClipFeed = () => {
     }
 
     return [...clips.slice(selectedIndex), ...clips.slice(0, selectedIndex)];
-  }, [clipId, clips]);
+  }, [clipId, data?.clips, stateClips]);
 
   if (isLoading && stateClips.length === 0) {
     return (

@@ -8,20 +8,20 @@ import CommentModal from "./CommentModal";
 import { useLikeClip } from "../../features/clips/hooks/useLikeClip";
 import { useFollowUser } from "../../features/users/hooks/useFollowUser";
 import useAuthStore from "../../store/authStore";
+import { useOverlayVisibility } from "../../app/context/useOverlayVisibility";
 
 const ClipCard = ({ clip }) => {
   const [showComments, setShowComments] = useState(false);
 
   const [expanded, setExpanded] = useState(false);
 
-  const [controlsVisible, setControlsVisible] = useState(true);
+  const { controlsVisible, revealControls } = useOverlayVisibility();
 
   const [isLongVideo, setIsLongVideo] = useState(false);
 
   const [heartBurstKey, setHeartBurstKey] = useState(null);
   const [isFollowingCreator, setIsFollowingCreator] = useState(false);
 
-  const controlsTimerRef = useRef(null);
   const doubleTapLikedRef = useRef(false);
   const latestClipRef = useRef(clip);
   const doubleTapPendingRef = useRef(false);
@@ -53,24 +53,6 @@ const ClipCard = ({ clip }) => {
 
     return `${caption.slice(0, 110)}...`;
   }, [caption]);
-
-  const revealControls = useCallback(() => {
-    setControlsVisible(true);
-
-    window.clearTimeout(controlsTimerRef.current);
-
-    controlsTimerRef.current = window.setTimeout(() => {
-      setControlsVisible(false);
-    }, 2500);
-  }, []);
-
-  useEffect(() => {
-    revealControls();
-
-    return () => {
-      window.clearTimeout(controlsTimerRef.current);
-    };
-  }, [revealControls]);
 
   useEffect(() => {
     doubleTapLikedRef.current = false;

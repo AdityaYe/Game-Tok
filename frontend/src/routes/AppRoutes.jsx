@@ -32,6 +32,8 @@ const ProfileClipFeed = lazy(() => import("../pages/general/ProfileClipFeed"));
 
 const Search = lazy(() => import("../components/Search"));
 
+const SearchClipFeed = lazy(() => import("../pages/general/SearchClipFeed"));
+
 const Notifications = lazy(() => import("../components/Notifications"));
 
 const UploadClip = lazy(() => import("../pages/creator/UploadClip"));
@@ -100,7 +102,7 @@ const AppRoutes = () => {
             path="/feed"
             element={
               <ProtectedRoute>
-                <AppShell>
+                <AppShell variant="feed">
                   <FollowingFeed />
                 </AppShell>
               </ProtectedRoute>
@@ -134,6 +136,15 @@ const AppRoutes = () => {
             element={
               <AppShell>
                 <Search />
+              </AppShell>
+            }
+          />
+
+          <Route
+            path="/search/clips/:clipId"
+            element={
+              <AppShell variant="feed">
+                <SearchClipFeed />
               </AppShell>
             }
           />

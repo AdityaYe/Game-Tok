@@ -411,6 +411,23 @@
   flex-direction: column;
   gap: 10px;
   pointer-events: auto;
+  opacity: var(--clip-control-opacity, 0.54);
+  transform: scale(var(--clip-control-scale, 0.97));
+  transform-origin: left bottom;
+  transition:
+    opacity 260ms ease,
+    transform 240ms ease;
+  will-change: opacity, transform;
+}
+
+.clip-card.is-controls-visible .clip-bottom-meta,
+.clip-card.is-active .clip-bottom-meta {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clip-card.is-long-video.is-idle .clip-bottom-meta {
+  opacity: 0.36;
 }
 
 .clip-creator-row {
@@ -734,6 +751,7 @@
   transition:
     opacity 260ms ease,
     transform 240ms ease;
+  will-change: opacity, transform;
 }
 
 .clip-actions.is-controls-visible,

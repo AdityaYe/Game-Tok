@@ -120,7 +120,7 @@ const Profile = () => {
                   rel="noreferrer"
                   aria-label={label}
                 >
-                  <Icon />
+                  {React.createElement(Icon)}
                 </a>
               ))}
             </div>

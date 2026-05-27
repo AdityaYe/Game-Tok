@@ -10,6 +10,7 @@ const { createClipSchema, commentSchema } = require("../validators/clip.validato
 const router = express.Router();
 
 router.get("/saved", authMiddleware, asyncHandler(clipController.getSavedClips));
+router.get("/following", authMiddleware, asyncHandler(clipController.getFollowingClips));
 router.get("/search", asyncHandler(clipController.searchClips));
 router.get("/:clipId/comments", asyncHandler(clipController.getComments));
 router.get("/", asyncHandler(clipController.getClips),);

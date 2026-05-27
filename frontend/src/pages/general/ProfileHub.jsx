@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -206,7 +206,7 @@ const ProfileHub = () => {
                     rel="noreferrer"
                     aria-label={label}
                   >
-                    <Icon />
+                    {createElement(Icon)}
                   </a>
                 ))}
               </div>
@@ -250,15 +250,6 @@ const ProfileHub = () => {
               </div>
             </div>
           </div>
-
-          <button
-            type="button"
-            className="profile-edit-btn"
-            onClick={() => setIsEditingProfile((value) => !value)}
-          >
-            <FaEdit />
-            {isEditingProfile ? "Close" : "Edit profile"}
-          </button>
 
           {user?.bio && <p className="profile-hub__bio">{user.bio}</p>}
         </section>
@@ -320,7 +311,7 @@ const ProfileHub = () => {
               {Object.entries(socialConfig).map(([key, { label, icon: Icon }]) => (
                 <label key={key}>
                   <span>
-                    <Icon />
+                    {createElement(Icon)}
                     {label}
                   </span>
                   <input
@@ -352,6 +343,15 @@ const ProfileHub = () => {
 
         <section className="profile-section" aria-labelledby="profile-actions-title">
           <div className="profile-action-grid profile-action-grid--compact">
+            <ProfileAction
+              as="button"
+              type="button"
+              icon={FaEdit}
+              title={isEditingProfile ? "Close editor" : "Edit profile"}
+              description="Update avatar, banner, and bio"
+              onClick={() => setIsEditingProfile((value) => !value)}
+            />
+
             <ProfileAction
               to="/upload-clip"
               icon={FaUpload}

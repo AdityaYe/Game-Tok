@@ -5,6 +5,7 @@ import { FixedSizeList } from "react-window";
 import { InfiniteLoader } from "react-window-infinite-loader";
 
 import ClipCard from "./ClipCard";
+import { useOverlayVisibility } from "../../app/context/useOverlayVisibility";
 
 const FeedRow = ({ data, index, style }) => {
   if (!data.isItemLoaded(index)) {
@@ -30,6 +31,8 @@ const ClipFeed = ({
   hasMore,
 
   loadMore,
+
+  resetKey,
 }) => {
   const viewportRef = useRef(null);
   const outerRef = useRef(null);
@@ -37,6 +40,7 @@ const ClipFeed = ({
   const wheelLockRef = useRef(false);
   const snapTimeoutRef = useRef(null);
   const [height, setHeight] = useState(720);
+  const { revealControls } = useOverlayVisibility();
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -118,6 +122,8 @@ const ClipFeed = ({
         return;
       }
 
+      revealControls();
+
       const direction = event.deltaY > 0 ? 1 : -1;
       wheelLockRef.current = true;
       scrollToIndex(currentIndexRef.current + direction);
@@ -132,11 +138,16 @@ const ClipFeed = ({
     return () => {
       scroller.removeEventListener("wheel", handleWheel);
     };
-  }, [scrollToIndex]);
+  }, [revealControls, scrollToIndex]);
 
   useEffect(() => {
     scrollToIndex(currentIndexRef.current, "auto");
   }, [height, scrollToIndex]);
+
+  useEffect(() => {
+    currentIndexRef.current = 0;
+    scrollToIndex(0, "auto");
+  }, [resetKey, scrollToIndex]);
 
   useEffect(() => {
     return () => {
@@ -169,6 +180,7 @@ const ClipFeed = ({
             itemSize={height}
             onItemsRendered={onItemsRendered}
             onScroll={({ scrollOffset }) => {
+              revealControls();
               currentIndexRef.current = Math.round(scrollOffset / height);
 
               window.clearTimeout(snapTimeoutRef.current);

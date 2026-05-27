@@ -3,6 +3,7 @@ const clipModel = require("../models/clip.model");
 const likeModel = require("../models/like.model");
 const saveModel = require("../models/save.model");
 const commentModel = require("../models/comment.model");
+const userModel = require("../models/user.model");
 
 const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
@@ -190,6 +191,119 @@ async function getClips(req, res) {
 
         totalPages: Math.ceil(totalClips / limit),
 
+        hasMore: skip + clips.length < totalClips,
+      },
+    }),
+  );
+}
+
+async function getFollowingClips(req, res) {
+  const { page, limit, skip } = getPagination(req.query);
+  const followingIds = (req.user.following || []).map((id) => id.toString());
+  const selectedCreatorId = req.query.creatorId?.trim();
+  const creatorFilter =
+    selectedCreatorId && followingIds.includes(selectedCreatorId)
+      ? [selectedCreatorId]
+      : followingIds;
+
+  const creators = await userModel
+    .find({
+      _id: {
+        $in: followingIds,
+      },
+      isDeleted: {
+        $ne: true,
+      },
+    })
+    .select(
+      `
+        fullName
+        avatar
+        isVerified
+        followerCount
+      `,
+    )
+    .lean();
+
+  const creatorOrder = new Map(followingIds.map((id, index) => [id, index]));
+  const orderedCreators = creators.sort(
+    (a, b) =>
+      (creatorOrder.get(a._id.toString()) ?? 0) -
+      (creatorOrder.get(b._id.toString()) ?? 0),
+  );
+
+  if (followingIds.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, "Following clips fetched successfully", {
+        creators: [],
+        clips: [],
+        pagination: {
+          page,
+          limit,
+          totalItems: 0,
+          totalPages: 0,
+          hasMore: false,
+        },
+      }),
+    );
+  }
+
+  const filter = {
+    creator: {
+      $in: creatorFilter,
+    },
+    isDeleted: {
+      $ne: true,
+    },
+  };
+
+  const clips = await clipModel
+    .find(filter)
+    .select(
+      `
+        gameName
+        gameCover
+        gameUrl
+        gameAppId
+        igdbId
+        thumbnail
+        video
+        description
+        tags
+        creator
+        likeCount
+        commentCount
+        savesCount
+        views
+        createdAt
+      `,
+    )
+    .populate(
+      "creator",
+      `
+        fullName
+        avatar
+        isVerified
+      `,
+    )
+    .sort({
+      createdAt: -1,
+    })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalClips = await clipModel.countDocuments(filter);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Following clips fetched successfully", {
+      creators: orderedCreators,
+      clips: clips.map(withCaption),
+      pagination: {
+        page,
+        limit,
+        totalItems: totalClips,
+        totalPages: Math.ceil(totalClips / limit),
         hasMore: skip + clips.length < totalClips,
       },
     }),
@@ -591,6 +705,7 @@ async function trackWatchTime(req, res) {
 module.exports = {
   createClip,
   getClips,
+  getFollowingClips,
   searchClips,
   likeClip,
   saveClip,

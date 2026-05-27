@@ -1,15 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
+import { FaBell, FaSearch } from "react-icons/fa";
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../store/authStore";
 import { useNotifications } from "../../features/notifications/hooks/useNotifications";
 import { useNotificationsSocket } from "../../features/notifications/hooks/useNotificationsSocket";
+import { useOverlayVisibility } from "../context/useOverlayVisibility";
 
 const TopBar = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const { controlsVisible, revealControls } = useOverlayVisibility();
   const { data: notificationsData } = useNotifications({
     enabled: !!user,
     staleTime: 30_000,
@@ -26,7 +28,11 @@ const TopBar = () => {
   useNotificationsSocket(handleNotification);
 
   return (
-    <header className="top-bar">
+    <header
+      className={`top-bar ${controlsVisible ? "is-controls-visible is-active" : "is-idle"}`}
+      onMouseMove={revealControls}
+      onTouchStart={revealControls}
+    >
       <Link to="/" className="top-bar__brand" aria-label="GameTok home">
         <span className="top-bar__mark">GT</span>
         <span className="top-bar__title">GameTok</span>
@@ -59,18 +65,6 @@ const TopBar = () => {
               )}
             </button>
 
-            <button
-              type="button"
-              className="top-bar__avatar-btn"
-              aria-label="Profile"
-              onClick={() => navigate("/profile")}
-            >
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.fullName || "Profile"} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </button>
           </>
         ) : (
           <div className="top-bar__guest-actions">

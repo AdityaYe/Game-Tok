@@ -26,6 +26,23 @@
   box-shadow: var(--shadow-lg);
 }
 
+.app-shell--feed.is-overlay-active,
+.app-shell--feed.is-overlay-idle {
+  --clip-control-opacity: 0.54;
+  --clip-control-scale: 0.97;
+  --clip-control-bg: rgba(8, 11, 16, 0.28);
+  --clip-control-border: rgba(255, 255, 255, 0.1);
+  --clip-control-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.app-shell--feed.is-overlay-active {
+  --clip-control-opacity: 1;
+  --clip-control-scale: 1;
+  --clip-control-bg: rgba(9, 13, 18, 0.48);
+  --clip-control-border: rgba(255, 255, 255, 0.2);
+  --clip-control-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+}
+
 .app-main {
   height: 100%;
   overflow-y: auto;
@@ -59,6 +76,25 @@
   gap: var(--space-3);
   background: linear-gradient(180deg, rgba(5, 7, 13, 0.82), rgba(5, 7, 13, 0));
   pointer-events: none;
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: top center;
+  transition:
+    opacity 260ms ease,
+    transform 240ms ease;
+  will-change: opacity, transform;
+}
+
+.app-shell--feed .top-bar {
+  opacity: var(--clip-control-opacity, 0.54);
+  transform: scale(var(--clip-control-scale, 0.97));
+}
+
+.app-shell--feed .top-bar.is-controls-visible,
+.app-shell--feed .top-bar.is-active,
+.app-shell--feed .top-bar:hover {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .top-bar > * {
@@ -100,7 +136,7 @@
 }
 
 .top-bar__actions {
-  gap: var(--space-2);
+  gap: clamp(8px, 2vw, 12px);
 }
 
 .top-bar__icon-btn,
@@ -110,16 +146,17 @@
   min-width: 38px;
   height: 38px;
   justify-content: center;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--clip-control-border, var(--color-border));
   border-radius: var(--radius-full);
   color: var(--color-text);
-  background: rgba(9, 13, 22, 0.58);
-  box-shadow: var(--shadow-sm);
+  background: var(--clip-control-bg, rgba(9, 13, 22, 0.58));
+  box-shadow: var(--clip-control-shadow, var(--shadow-sm));
   backdrop-filter: blur(18px);
   transition:
     transform var(--transition-base),
     border-color var(--transition-base),
-    background var(--transition-base);
+    background var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .top-bar__icon-btn:hover,
