@@ -72,8 +72,6 @@ async function searchAll(req, res) {
     );
   }
 
-  /* SEARCH CREATORS */
-
   const creators = await userModel
 
     .find({
@@ -98,8 +96,6 @@ async function searchAll(req, res) {
     .limit(12)
 
     .lean();
-
-  /* SEARCH CLIPS */
 
   const clips = await clipModel
 
@@ -139,8 +135,6 @@ async function searchAll(req, res) {
 
     .lean();
 
-  /* SEARCH TAGS */
-
   const tagClips = await clipModel
 
     .find({
@@ -165,8 +159,6 @@ async function searchAll(req, res) {
     clips: clips.map(withCaption),
     tags,
   };
-
-  /* CACHE SEARCH */
 
   cache.set(cacheKey, responseData, 60);
 

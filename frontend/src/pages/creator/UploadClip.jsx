@@ -42,10 +42,6 @@ const UploadClip = () => {
     progress,
   } = useUploadClip();
 
-  /* =========================
-     VIDEO PREVIEW
-  ========================= */
-
   useEffect(() => {
     if (!videoFile) {
       setVideoURL("");
@@ -59,10 +55,6 @@ const UploadClip = () => {
 
     return () => URL.revokeObjectURL(url);
   }, [videoFile]);
-
-  /* =========================
-     GAME SEARCH
-  ========================= */
 
   useEffect(() => {
     const trimmedSearch = gameSearch.trim();
@@ -100,10 +92,9 @@ const UploadClip = () => {
           setGameResults((response.games || []).slice(0, 3));
 
           setShowDropdown(true);
-        } catch (err) {
-          if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED") {
-            console.log(err);
-          }
+        } catch {
+          setGameResults([]);
+          setShowDropdown(false);
         } finally {
           setIsSearchingGames(false);
         }
@@ -118,10 +109,6 @@ const UploadClip = () => {
       clearTimeout(timeout);
     };
   }, [gameSearch, selectedGame]);
-
-  /* =========================
-     FILE CHANGE
-  ========================= */
 
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -144,10 +131,6 @@ const UploadClip = () => {
 
     setVideoFile(file);
   };
-
-  /* =========================
-     DROPZONE
-  ========================= */
 
   const onDrop = (e) => {
     e.preventDefault();
@@ -177,10 +160,6 @@ const UploadClip = () => {
     fileInputRef.current?.click();
   };
 
-  /* =========================
-     SELECT GAME
-  ========================= */
-
   const selectGame = (game) => {
     setSelectedGame(game);
 
@@ -192,10 +171,6 @@ const UploadClip = () => {
 
     setShowDropdown(false);
   };
-
-  /* =========================
-     SUBMIT
-  ========================= */
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -243,10 +218,6 @@ const UploadClip = () => {
     });
   };
 
-  /* =========================
-     DISABLED
-  ========================= */
-
   const isDisabled = useMemo(() => {
     return !selectedGame || !gameName.trim() || !videoFile || isPending;
   }, [selectedGame, gameName, videoFile, isPending]);
@@ -290,8 +261,6 @@ const UploadClip = () => {
           "
           onSubmit={onSubmit}
         >
-          {/* VIDEO */}
-
           <div
             className="
             field-group
@@ -360,8 +329,6 @@ const UploadClip = () => {
             )}
           </div>
 
-          {/* VIDEO PREVIEW */}
-
           {videoURL && (
             <div
               className="
@@ -378,8 +345,6 @@ const UploadClip = () => {
               />
             </div>
           )}
-
-          {/* GAME SEARCH */}
 
           <div
             className="
@@ -445,8 +410,6 @@ const UploadClip = () => {
             )}
           </div>
 
-          {/* CAPTION */}
-
           <div
             className="
             field-group
@@ -471,8 +434,6 @@ const UploadClip = () => {
             />
           </div>
 
-          {/* TAGS */}
-
           <div
             className="
             field-group
@@ -491,8 +452,6 @@ const UploadClip = () => {
             />
           </div>
 
-          {/* ACTIONS */}
-
           <div
             className="
             form-actions
@@ -508,8 +467,6 @@ const UploadClip = () => {
               {isPending ? `Uploading ${progress}%` : "Upload Clip"}
             </button>
           </div>
-
-          {/* PROGRESS */}
 
           {isPending && (
             <div

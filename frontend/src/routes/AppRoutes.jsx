@@ -10,8 +10,6 @@ import FeedSkeleton from "../components/ui/skeletons/FeedSkeleton";
 import AppShell from "../app/layouts/AppShell";
 import FeedLayout from "../app/layouts/FeedLayout";
 
-/* LAZY PAGES */
-
 const UserRegister = lazy(() => import("../pages/auth/UserRegister"));
 
 const UserLogin = lazy(() => import("../pages/auth/UserLogin"));
@@ -52,8 +50,6 @@ const AppRoutes = () => {
         }
       >
         <Routes>
-          {/* AUTH */}
-
           <Route
             path="/register"
             element={
@@ -84,8 +80,6 @@ const AppRoutes = () => {
           <Route path="/creator/register" element={<Navigate to="/user/register" replace />} />
 
           <Route path="/creator/login" element={<Navigate to="/user/login" replace />} />
-
-          {/* GENERAL */}
 
           <Route
             path="/"
@@ -172,8 +166,6 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
-
-          {/* CREATOR */}
 
           <Route
             path="/creator/:id"

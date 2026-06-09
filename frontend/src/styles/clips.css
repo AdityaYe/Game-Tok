@@ -1,9 +1,5 @@
 @import "./theme.css";
 
-/* =========================
-   PAGE
-========================= */
-
 :root {
   --clip-meta-bottom-offset: calc(
     var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
@@ -25,10 +21,6 @@
 
   background: var(--color-bg);
 }
-
-/* =========================
-   FEED
-========================= */
 
 .clips-feed {
   width: 100%;
@@ -84,8 +76,6 @@
   pointer-events: none;
 }
 
-/* Hide scrollbar */
-
 .clips-feed::-webkit-scrollbar {
   display: none;
 }
@@ -93,10 +83,6 @@
 .clips-feed {
   scrollbar-width: none;
 }
-
-/* =========================
-   CLIP
-========================= */
 
 .clip {
   position: relative;
@@ -110,10 +96,6 @@
 
   background: #000;
 }
-
-/* =========================
-   VIDEO
-========================= */
 
 .clip-card {
   position: relative;
@@ -356,10 +338,6 @@
   }
 }
 
-/* =========================
-   OVERLAY
-========================= */
-
 .clip-overlay {
   position: absolute;
 
@@ -367,10 +345,6 @@
 
   pointer-events: none;
 }
-
-/* =========================
-   OVERLAY GRADIENT
-========================= */
 
 .clip-overlay-gradient {
   position: absolute;
@@ -395,10 +369,6 @@
     linear-gradient(270deg, rgba(0, 0, 0, 0.45), transparent 34%);
 }
 
-/* =========================
-   CONTENT
-========================= */
-
 .clip-content {
   position: relative;
   z-index: 2;
@@ -410,10 +380,6 @@
   padding-right: 92px;
   pointer-events: auto;
 }
-
-/* =========================
-   GAME TITLE
-========================= */
 
 .clip-bottom-meta {
   position: absolute;
@@ -551,10 +517,6 @@
   cursor: not-allowed;
 }
 
-/* =========================
-   DESCRIPTION
-========================= */
-
 .clip-caption {
   margin: 0;
 
@@ -608,10 +570,6 @@
   font-size: 0.88rem;
   font-weight: 600;
 }
-
-/* =========================
-   META
-========================= */
 
 .clip-meta {
   display: flex;
@@ -686,10 +644,6 @@
   pointer-events: none;
 }
 
-/* =========================
-   STORE BUTTON
-========================= */
-
 .clip-btn {
   align-self: flex-start;
 
@@ -733,10 +687,6 @@
 
   outline-offset: 3px;
 }
-
-/* =========================
-   ACTIONS
-========================= */
 
 .clip-actions {
   position: absolute;
@@ -801,10 +751,6 @@
 
   cursor: pointer;
 }
-
-/* =========================
-   COMMENT
-========================= */
 
 .comments-overlay {
   position: fixed;
@@ -1210,10 +1156,6 @@
   }
 }
 
-/* =========================
-   ACTION GROUP
-========================= */
-
 .clip-action-group {
   display: flex;
   flex-direction: column;
@@ -1224,10 +1166,6 @@
 
   color: #fff;
 }
-
-/* =========================
-   ACTION BUTTON
-========================= */
 
 .clip-action {
   width: var(--clip-action-size);
@@ -1290,10 +1228,6 @@
   color: #fff;
 }
 
-/* =========================
-   COUNTS
-========================= */
-
 .clip-action__count {
   font-size: 0.78rem;
 
@@ -1301,10 +1235,6 @@
 
   color: rgba(255, 255, 255, 0.92);
 }
-
-/* =========================
-   EMPTY STATE
-========================= */
 
 .empty-state {
   position: absolute;
@@ -1320,10 +1250,6 @@
 
   padding: 20px;
 }
-
-/* =========================
-   DESKTOP
-========================= */
 
 @media (min-width: 768px) {
   .clip-card {
@@ -1346,10 +1272,6 @@
     font-size: 1rem;
   }
 }
-
-/* =========================
-   LARGE DESKTOP
-========================= */
 
 @media (min-width: 1200px) {
   .clips-feed {

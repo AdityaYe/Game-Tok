@@ -16,8 +16,8 @@ export function useWatchTracker({ clipId, isVisible }) {
           await api.post(`/clips/${clipId}/view`);
 
           sentRef.current = true;
-        } catch (err) {
-          console.log(err);
+        } catch {
+          sentRef.current = false;
         }
       },
 

@@ -98,10 +98,6 @@ async function searchGames(query) {
 
   const cacheKey = `games:${normalized}`;
 
-  /* =========================
-     MEMORY CACHE
-  ========================= */
-
   const memoryCache = cache.get(cacheKey);
 
   if (memoryCache) {
@@ -109,10 +105,6 @@ async function searchGames(query) {
 
     return memoryCache;
   }
-
-  /* =========================
-     DATABASE CACHE
-  ========================= */
 
   const existingGames = await gameModel
     .find({
@@ -131,10 +123,6 @@ async function searchGames(query) {
 
     return existingGames;
   }
-
-  /* =========================
-     IGDB API FALLBACK
-  ========================= */
 
   logger.info("IGDB API CALL");
 

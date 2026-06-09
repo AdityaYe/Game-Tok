@@ -162,10 +162,6 @@ const ClipCard = ({ clip }) => {
       <div className="clip-ui-layer">
         <div className="clip-overlay-frame">
           <div className="clip-bottom-meta">
-            {/* =========================
-                CREATOR
-            ========================= */}
-
             <div className="clip-creator-row">
               <Link
                 className="clip-info-avatar"
@@ -207,10 +203,6 @@ const ClipCard = ({ clip }) => {
               </div>
             </div>
 
-            {/* =========================
-                CAPTION
-            ========================= */}
-
             {caption && (
               <div className="clip-caption-block">
                 <p className={`clip-caption ${expanded ? "expanded" : ""}`}>
@@ -218,10 +210,6 @@ const ClipCard = ({ clip }) => {
                 </p>
               </div>
             )}
-
-            {/* =========================
-                EXPANDED META
-            ========================= */}
 
             {expanded && (
               <>
@@ -252,10 +240,6 @@ const ClipCard = ({ clip }) => {
                 )}
               </>
             )}
-
-            {/* =========================
-                EXPAND BUTTON
-            ========================= */}
 
             {hasExpandableContent && (
               <button
