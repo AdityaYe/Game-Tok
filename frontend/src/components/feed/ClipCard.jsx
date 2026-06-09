@@ -295,4 +295,4 @@ const ClipCard = ({ clip }) => {
   );
 };
 
-export default ClipCard;
+export default React.memo(ClipCard);

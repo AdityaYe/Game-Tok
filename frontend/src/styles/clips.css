@@ -54,20 +54,34 @@
   touch-action: pan-y;
 }
 
-.clip-feed-viewport > div {
+.clip-feed-scroller {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-.clip-feed-viewport > div::-webkit-scrollbar {
+.clip-feed-scroller::-webkit-scrollbar {
   display: none;
 }
 
-.clip-feed-viewport > div > div > div {
+.clip-feed-item {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+.clip-feed-sentinel {
+  width: 100%;
+  height: 1px;
+  scroll-snap-align: none;
+  pointer-events: none;
 }
 
 /* Hide scrollbar */

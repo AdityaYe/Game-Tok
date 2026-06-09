@@ -1,29 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { FixedSizeList } from "react-window";
-
-import { InfiniteLoader } from "react-window-infinite-loader";
-
 import ClipCard from "./ClipCard";
 import { useOverlayVisibility } from "../../app/context/useOverlayVisibility";
-
-const FeedRow = ({ data, index, style }) => {
-  if (!data.isItemLoaded(index)) {
-    return <div style={style}>Loading more clips...</div>;
-  }
-
-  const clip = data.items[index];
-
-  if (!clip) {
-    return null;
-  }
-
-  return (
-    <div style={style}>
-      <ClipCard clip={clip} />
-    </div>
-  );
-};
 
 const ClipFeed = ({
   items = [],
@@ -33,10 +11,16 @@ const ClipFeed = ({
   loadMore,
 
   resetKey,
+
+  emptyMessage = "No clips available.",
 }) => {
   const viewportRef = useRef(null);
-  const outerRef = useRef(null);
+  const scrollerRef = useRef(null);
+  const loadMoreRef = useRef(null);
   const currentIndexRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const latestTrimmedCountRef = useRef(0);
+  const previousTrimmedCountRef = useRef(0);
   const wheelLockRef = useRef(false);
   const snapTimeoutRef = useRef(null);
   const [height, setHeight] = useState(720);
@@ -61,51 +45,55 @@ const ClipFeed = ({
     return () => observer.disconnect();
   }, []);
 
-  const itemCount = hasMore ? items.length + 1 : items.length;
+  const visibleItems = useMemo(() => items.slice(-50), [items]);
+  const trimmedCount = items.length - visibleItems.length;
+  latestTrimmedCountRef.current = trimmedCount;
 
-  const isItemLoaded = useCallback((index) => index < items.length, [items.length]);
-  const itemData = useMemo(
-    () => ({
-      isItemLoaded,
-      items,
-    }),
-    [isItemLoaded, items],
-  );
-
-  const getItemKey = useCallback(
-    (index, data) => data.items[index]?._id || `loader-${index}`,
-    [],
-  );
-
-  const scrollToIndex = useCallback(
-    (nextIndex, behavior = "smooth") => {
-      if (!outerRef.current || itemCount === 0) {
-        return;
-      }
-
-      const maxIndex = Math.max(0, itemCount - 1);
-      const clampedIndex = Math.min(Math.max(nextIndex, 0), maxIndex);
-
-      currentIndexRef.current = clampedIndex;
-      outerRef.current.scrollTo({
-        top: clampedIndex * height,
-        behavior,
-      });
-    },
-    [height, itemCount],
-  );
-
-  const snapToNearest = useCallback(() => {
-    if (!outerRef.current || height <= 0) {
+  const requestLoadMore = useCallback(() => {
+    if (!hasMore || loadingMoreRef.current) {
       return;
     }
 
-    const nearestIndex = Math.round(outerRef.current.scrollTop / height);
+    loadingMoreRef.current = true;
+
+    Promise.resolve(loadMore?.()).finally(() => {
+      loadingMoreRef.current = false;
+    });
+  }, [hasMore, loadMore]);
+
+  const scrollToIndex = useCallback(
+    (nextIndex, behavior = "smooth") => {
+      if (!scrollerRef.current || visibleItems.length === 0) {
+        return;
+      }
+
+      const maxIndex = Math.max(0, visibleItems.length - 1);
+      const clampedIndex = Math.min(Math.max(nextIndex, 0), maxIndex);
+
+      currentIndexRef.current = clampedIndex;
+      scrollerRef.current.scrollTo({
+        top: clampedIndex * height,
+        behavior,
+      });
+
+      if (nextIndex > maxIndex) {
+        requestLoadMore();
+      }
+    },
+    [height, requestLoadMore, visibleItems.length],
+  );
+
+  const snapToNearest = useCallback(() => {
+    if (!scrollerRef.current || height <= 0) {
+      return;
+    }
+
+    const nearestIndex = Math.round(scrollerRef.current.scrollTop / height);
     scrollToIndex(nearestIndex);
   }, [height, scrollToIndex]);
 
   useEffect(() => {
-    const scroller = outerRef.current;
+    const scroller = scrollerRef.current;
 
     if (!scroller) {
       return undefined;
@@ -141,13 +129,55 @@ const ClipFeed = ({
   }, [revealControls, scrollToIndex]);
 
   useEffect(() => {
+    const scroller = scrollerRef.current;
+    const sentinel = loadMoreRef.current;
+
+    if (!scroller || !sentinel || !hasMore) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          requestLoadMore();
+        }
+      },
+      {
+        root: scroller,
+        rootMargin: "100% 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [hasMore, requestLoadMore, visibleItems.length]);
+
+  useEffect(() => {
     scrollToIndex(currentIndexRef.current, "auto");
   }, [height, scrollToIndex]);
 
   useEffect(() => {
     currentIndexRef.current = 0;
-    scrollToIndex(0, "auto");
-  }, [resetKey, scrollToIndex]);
+    previousTrimmedCountRef.current = latestTrimmedCountRef.current;
+    scrollerRef.current?.scrollTo({
+      top: 0,
+      behavior: "auto",
+    });
+  }, [resetKey]);
+
+  useEffect(() => {
+    const trimDelta = trimmedCount - previousTrimmedCountRef.current;
+    previousTrimmedCountRef.current = trimmedCount;
+
+    if (trimDelta <= 0) {
+      return;
+    }
+
+    currentIndexRef.current = Math.max(0, currentIndexRef.current - trimDelta);
+    scrollToIndex(currentIndexRef.current, "auto");
+  }, [scrollToIndex, trimmedCount]);
 
   useEffect(() => {
     return () => {
@@ -155,46 +185,37 @@ const ClipFeed = ({
     };
   }, []);
 
+  const handleScroll = useCallback(() => {
+    if (!scrollerRef.current || height <= 0) {
+      return;
+    }
+
+    revealControls();
+    currentIndexRef.current = Math.round(scrollerRef.current.scrollTop / height);
+
+    window.clearTimeout(snapTimeoutRef.current);
+    snapTimeoutRef.current = window.setTimeout(snapToNearest, 120);
+  }, [height, revealControls, snapToNearest]);
+
   return (
     <div className="clip-feed-viewport" ref={viewportRef}>
-      <InfiniteLoader
-        isItemLoaded={isItemLoaded}
-        itemCount={itemCount}
-        loadMoreItems={loadMore}
+      <div
+        className="clip-feed-scroller"
+        ref={scrollerRef}
+        onScroll={handleScroll}
       >
-        {({ onItemsRendered, ref }) => {
-          const setListRef = (instance) => {
-            if (typeof ref === "function") {
-              ref(instance);
-            } else if (ref) {
-              ref.current = instance;
-            }
-          };
+        {visibleItems.length > 0 ? (
+          visibleItems.map((clip) => (
+            <section className="clip-feed-item" key={clip._id}>
+              <ClipCard clip={clip} />
+            </section>
+          ))
+        ) : (
+          <div className="empty-state">{emptyMessage}</div>
+        )}
 
-          return (
-          <FixedSizeList
-            height={height}
-            itemData={itemData}
-            itemKey={getItemKey}
-            itemCount={itemCount}
-            itemSize={height}
-            onItemsRendered={onItemsRendered}
-            onScroll={({ scrollOffset }) => {
-              revealControls();
-              currentIndexRef.current = Math.round(scrollOffset / height);
-
-              window.clearTimeout(snapTimeoutRef.current);
-              snapTimeoutRef.current = window.setTimeout(snapToNearest, 120);
-            }}
-            outerRef={outerRef}
-            ref={setListRef}
-            width="100%"
-          >
-            {FeedRow}
-          </FixedSizeList>
-          );
-        }}
-      </InfiniteLoader>
+        <div ref={loadMoreRef} className="clip-feed-sentinel" aria-hidden="true" />
+      </div>
     </div>
   );
 };
