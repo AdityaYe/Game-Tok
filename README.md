@@ -1,70 +1,94 @@
 # GameTok
 
-GameTok is a full-stack short-form gaming content platform inspired by TikTok, YouTube Shorts, and Instagram Reels, built specifically for gameplay discovery and creator-driven content.
+GameTok is a full-stack short-form gaming content platform inspired by TikTok, Instagram Reels, and YouTube Shorts.
 
-The platform enables creators to upload gameplay clips while users consume content through a high-performance vertical autoplay feed with real-time social interactions and game metadata integration.
-
-Built using a scalable MERN-stack architecture with cloud-based media delivery and external API integrations.
+Built specifically for gameplay creators and gaming communities, the platform focuses on immersive fullscreen gameplay feeds, creator-driven content, social interactions, and game discovery powered by IGDB integration.
 
 ---
 
 # Features
 
-## Authentication & Authorization
+## Authentication
 
-- JWT-based authentication
-- Secure HTTP-only cookie sessions
-- Role-based access control
-- Protected routes & middleware
-
----
-
-## Video Feed System
-
-- TikTok-style vertical autoplay feed
-- Infinite scroll architecture
-- IntersectionObserver-based smart playback
-- Mobile-first responsive design
-- Optimized media rendering
+* JWT authentication
+* Secure HTTP-only cookie sessions
+* Protected routes & middleware
 
 ---
 
-## Creator Platform
+## Fullscreen Gameplay Feed
 
-- Creator dashboard
-- Gameplay clip uploads & management
-- Metadata editing & deletion
-- Creator analytics:
-  - Total uploads
-  - Total likes
-  - Total saves
+* TikTok-style vertical feed
+* Smart autoplay system
+* Snap scrolling experience
+* Dynamic support for:
 
----
-
-## Social Features
-
-- Like & save system
-- Dynamic comments module
-- Real-time engagement updates
-- Creator verification badges
+  * landscape gameplay
+  * portrait gameplay
+* Cinematic fading UI system
+* Mobile-first responsive experience
 
 ---
 
-## Game Metadata Integration
+## Video Interactions
 
-- IGDB-powered game search
-- Dynamic metadata fetching
-- Game cover art & genre support
-- MongoDB caching layer for optimized API usage
+* Tap to pause/play
+* Double tap to like
+* Save/bookmark clips
+* Dynamic comments system
+* Persistent playback state
+* Optimized fullscreen playback
+
+---
+
+## Creator Profiles
+
+* Custom creator profiles
+* Profile banners & avatars
+* Follow system
+* Social links integration
+* Upload statistics
+
+---
+
+## Search & Discovery
+
+* Search by:
+
+  * usernames
+  * games
+  * tags
+  * clips
+* Explore-style clip discovery grid
+* Fullscreen clip viewing from search
+* Dynamic creator filtering
+
+---
+
+## Game Metadata System
+
+* IGDB-powered game search
+* Dynamic game recommendations
+* Game cover integration
+* MongoDB caching layer for optimized API usage
+
+---
+
+## Following Feed
+
+* Dedicated following feed
+* Creator-based clip filtering
+* Curved cinematic creator selector
+* Floating overlay navigation system
 
 ---
 
 ## Media Infrastructure
 
-- Cloudinary-based media hosting
-- Streaming uploads
-- Optimized cloud media delivery
-- Scalable storage architecture
+* Cloudinary media hosting
+* Streaming uploads
+* Optimized media delivery
+* Thumbnail generation
 
 ---
 
@@ -72,25 +96,29 @@ Built using a scalable MERN-stack architecture with cloud-based media delivery a
 
 ## Frontend
 
-- React
-- React Router
-- Axios
-- CSS Modules
+* React
+* React Router
+* React Query
+* Axios
+* Zustand
+
+---
 
 ## Backend
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT
-- Multer
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT
+
+---
 
 ## APIs & Services
 
-- IGDB API
-- Twitch OAuth
-- Cloudinary
+* IGDB API
+* Twitch OAuth
+* Cloudinary
 
 ---
 
@@ -101,7 +129,7 @@ React Frontend
       ↓
 Express.js REST API
       ↓
-JWT Authentication Layer
+JWT Authentication
       ↓
 MongoDB Database
       ↓
@@ -114,21 +142,11 @@ IGDB / Twitch APIs
 
 # Performance Optimizations
 
-- Lazy-loaded media rendering
-- Metadata caching architecture
-- Optimized API request handling
-- Reduced unnecessary re-renders
-- Mobile-first performance tuning
-
----
-
-# Roadmap
-
-- Redis caching integration
-- WebSocket-based real-time updates
-- Dockerized deployment pipeline
-- AI-powered content recommendations
-- Scalable microservices migration
+* Lazy-loaded video rendering
+* Smart viewport playback
+* Metadata caching
+* Optimized rerender handling
+* GPU-friendly UI transitions
 
 ---
 
@@ -140,6 +158,8 @@ IGDB / Twitch APIs
 git clone <repo-url>
 cd gametok
 ```
+
+---
 
 ## Install Dependencies
 
@@ -160,22 +180,28 @@ npm install
 ```env
 MONGODB_URI=
 JWT_SECRET=
+
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-IGDB_CLIENT_ID=
-IGDB_CLIENT_SECRET=
+
+TWITCH_CLIENT_ID=
+TWITCH_CLIENT_SECRET=
 ```
 
 ---
 
 # Run Development Server
 
-```bash
-# frontend
-npm run dev
+## Frontend
 
-# backend
+```bash
+npm run dev
+```
+
+## Backend
+
+```bash
 npm run dev
 ```
 
@@ -183,4 +209,4 @@ npm run dev
 
 # Vision
 
-GameTok is designed as a scalable gaming-focused short-form content ecosystem combining creator tools, gameplay discovery, and modern social-media interaction patterns into a dedicated platform for gaming communities.
+GameTok is designed as a gaming-focused short-form content ecosystem combining immersive gameplay discovery, creator tools, and modern social-media interaction patterns into a dedicated platform for gaming communities.
